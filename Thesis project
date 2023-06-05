@@ -1,0 +1,3 @@
+install.packages("prioritizr", repos = "https://cran.rstudio.com/")
+install.packages("Rtools") # non ha funzionato
+install.packages("prioritizrdata", repos = "https://cran.rstudio.com/")
