@@ -15,7 +15,7 @@ tfc_costs
 # loading conservation features
 existing_spa <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Forest strictly protected/Forest_strictly_protected_25832.tif")
 N2000 <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Occurrence of FFH habitat types in North Rhine-Westphalia/Habitat_directive_FFH_25832.tif")
-fht <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Habitat_types_AnnexI/Dataset_from_Lanuv/forest_habitat_types_25832.tif")
+fht <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Habitat_types_AnnexI/Dataset_from_Lanuv/forest_habitat_types_reclas_25832.tif") 
 pwa <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Potential wilderness areas/PWA_3000_NRW_25832.tif")
 state_f <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Public forest/State_forest_25832.tif")
 TFC <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/forest_cover_NRW_25832.tif")
@@ -58,31 +58,32 @@ source      : forest_habitat_types_25832.tif
 name        : forest_habitat_types_25832 
 
 unique(fht)
-   forest_habitat_types_25832
-1                     9101.00
-2                     9102.00
-3                     9102.91
-4                     9103.00
-5                     9104.00
-6                     9105.00
-7                     9106.00
-8                     9106.91
-9                     9107.00
-10                    9108.00
-11                    9109.00
-12                    9110.00
-13                    9110.91
-14                    9130.00
-15                    9150.00
-16                    9160.00
-17                    9170.00
-18                    9180.00
-19                    9190.00
-20                   91001.00
-21                   91001.91
-22                   91002.00
-23                   91003.00
-24                   91004.00
+   forest_habitat_types_reclas_25832
+1                                  1
+2                                  3
+3                                  4
+4                                  5
+5                                  6
+6                                  7
+7                                  8
+8                                  9
+9                                 10
+10                                11
+11                                12
+12                                13
+13                                14
+14                                15
+15                                16
+16                                17
+17                                18
+18                                19
+19                                21
+20                                22
+21                                23
+22                                24
+23                                25
+24                                26
+25                                27
 
 pwa
 class       : SpatRaster 
