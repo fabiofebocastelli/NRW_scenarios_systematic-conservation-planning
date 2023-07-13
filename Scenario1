@@ -1,3 +1,107 @@
-install.packages("prioritizr", repos = "https://cran.rstudio.com/")
-install.packages("Rtools") # non ha funzionato
-install.packages("prioritizrdata", repos = "https://cran.rstudio.com/")
+# Scenario 1 
+
+library(prioritizr)
+library(sf)
+library(terra)
+library(vegan)
+library(cluster)
+library(raster)
+
+
+# load planning unit data
+tfc_costs <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Prioritizr/TFC_Vit_costs_25_100_25832.tif")
+tfc_costs
+
+# loading conservation features
+existing_spa <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Forest strictly protected/Forest_strictly_protected_25832.tif")
+N2000 <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Occurrence of FFH habitat types in North Rhine-Westphalia/Habitat_directive_FFH_25832.tif")
+fht <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Habitat_types_AnnexI/Dataset_from_Lanuv/forest_habitat_types_25832.tif")
+pwa <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Potential wilderness areas/PWA_3000_NRW_25832.tif")
+state_f <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Public forest/State_forest_25832.tif")
+TFC <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/forest_cover_NRW_25832.tif")
+cons_feat_1 <- c(existing_spa, N2000, fht, pwa, state_f, TFC) # in "terra" you can create a stack simply with c()
+cons_feat_1
+
+
+# create problem
+p1 <- problem(tfc_costs, cons_feat_1)
+p1
+
+# print number of planning units
+number_of_planning_units(p1)
+
+# Add an objective: Minimum set objective - Minimize the cost of the solution whilst ensuring that all targets are met 
+p1 <- problem(tfc_costs, cons_feat_1) %>% add_min_set_objective()
+p1
+
+
+# Add targets
+
+# setting different relative targets
+targets <- c(0, 1.0, 1.0, 0, 0.446, 0) # WARNING: check if the value 0 is correct for my purpose!!!
+                                       # Otherwise, I could set the representation targets of 17% based on Aichi Biodiv. Target 11,
+                                       # to provide adequate coverage of each forest habitat type 
+
+# adding targets to the problem
+p1 <- problem(tfc_costs, cons_feat_1) %>% add_min_set_objective() %>% add_relative_targets(targets)
+p1
+
+
+# Add constraints
+
+# add locked in/locked out constraints
+p1 <- problem(tfc_costs, cons_feat_1) %>% 
+       add_min_set_objective() %>% 
+       add_relative_targets(targets) %>% 
+       add_locked_in_constraints(pwa) %>% 
+       add_locked_in_constraints(state_f) %>% 
+       add_locked_out_constraints(existing_spa)
+
+# add linear constraints
+p1 <- problem(tfc_costs, cons_feat_1) %>% 
+  add_min_set_objective() %>% 
+  add_relative_targets(targets) %>% 
+  add_locked_in_constraints(pwa) %>% 
+  add_locked_in_constraints(state_f) %>% 
+  add_locked_out_constraints(existing_spa) %>%
+  add_linear_constraints(threshold = 52351, sense = "=", data = TFC) %>%
+  add_linear_constraints(threshold = 52351, sense = "=", data = state_f)
+
+
+# Add penalties
+
+# add boundary penalties
+p1 <- problem(tfc_costs, cons_feat_1) %>% 
+  add_min_set_objective() %>% 
+  add_relative_targets(targets) %>% 
+  add_locked_in_constraints(pwa) %>% 
+  add_locked_in_constraints(state_f) %>% 
+  add_locked_out_constraints(existing_spa) %>%
+  add_linear_constraints(threshold = 52351, sense = "=", data = TFC) %>%
+  add_linear_constraints(threshold = 52351, sense = "=", data = state_f) %>%
+  add_boundary_penalties(50, 0.5) # I don't know how this will work, it's gonna be a trial-and-error process
+
+# add connectivity penalties
+
+
+
+# solving experiment..
+  
+p1 <- problem(tfc_costs, cons_feat_1) %>% 
+  add_min_set_objective() %>% 
+  add_relative_targets(targets) %>% 
+  add_locked_in_constraints(pwa) %>% 
+  add_locked_in_constraints(state_f) %>% 
+  add_locked_out_constraints(existing_spa) %>%
+  add_linear_constraints(threshold = 52351, sense = "=", data = TFC) %>%
+  add_linear_constraints(threshold = 52351, sense = "=", data = state_f) %>%
+  add_boundary_penalties(50, 0.5) %>% 
+  add_highs_solver(gap = 0, verbose = FALSE)
+
+s <- solve(p1) 
+# I get this error : 
+# Problem failed presolve checks. These failures indicate that numerical issues could stall optimizer or produce incorrect results: ✖ Features must not have target values that are too high (> 1e6).
+# → Try re-scaling the feature data (e.g., convert units from m² to km²).
+
+
+
