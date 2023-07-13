@@ -31,6 +31,10 @@ name        : Forest_strictly_protected_25832
 min value   :                               1 
 max value   :                               1 
 
+unique(existing_spa)
+  Forest_strictly_protected_25832
+1                               1
+
 N2000
 class       : SpatRaster 
 dimensions  : 2370, 2513, 1  (nrow, ncol, nlyr)
@@ -39,6 +43,10 @@ extent      : 280329.8, 531629.8, 5578461, 5815461  (xmin, xmax, ymin, ymax)
 coord. ref. : ETRS89 / UTM zone 32N (EPSG:25832) 
 source      : Habitat_directive_FFH_25832.tif 
 name        : Habitat_directive_FFH_25832 
+
+unique(N2000)
+  Habitat_directive_FFH_25832
+1                           1
 
 fht
 class       : SpatRaster 
@@ -49,6 +57,33 @@ coord. ref. : ETRS89 / UTM zone 32N (EPSG:25832)
 source      : forest_habitat_types_25832.tif 
 name        : forest_habitat_types_25832 
 
+unique(fht)
+   forest_habitat_types_25832
+1                     9101.00
+2                     9102.00
+3                     9102.91
+4                     9103.00
+5                     9104.00
+6                     9105.00
+7                     9106.00
+8                     9106.91
+9                     9107.00
+10                    9108.00
+11                    9109.00
+12                    9110.00
+13                    9110.91
+14                    9130.00
+15                    9150.00
+16                    9160.00
+17                    9170.00
+18                    9180.00
+19                    9190.00
+20                   91001.00
+21                   91001.91
+22                   91002.00
+23                   91003.00
+24                   91004.00
+
 pwa
 class       : SpatRaster 
 dimensions  : 2370, 2513, 1  (nrow, ncol, nlyr)
@@ -57,6 +92,10 @@ extent      : 280329.8, 531629.8, 5578461, 5815461  (xmin, xmax, ymin, ymax)
 coord. ref. : ETRS89 / UTM zone 32N (EPSG:25832) 
 source      : PWA_3000_NRW_25832.tif 
 name        : PWA_3000_NRW_25832 
+
+unique(pwa)
+  PWA_3000_NRW_25832
+1                  1
  
 state_f
 class       : SpatRaster 
@@ -66,6 +105,10 @@ extent      : 280329.8, 531629.8, 5578461, 5815461  (xmin, xmax, ymin, ymax)
 coord. ref. : ETRS89 / UTM zone 32N (EPSG:25832) 
 source      : State_forest_25832.tif 
 name        : State_forest_25832 
+
+unique(state_f)
+  State_forest_25832
+1                  1
 
 TFC
 class       : SpatRaster 
@@ -77,6 +120,12 @@ source      : forest_cover_NRW_25832.tif
 name        : forest_cover_NRW_25832 
 min value   :                    311 
 max value   :                    313 
+
+unique(TFC)
+  forest_cover_NRW_25832
+1                    311
+2                    312
+3                    313
 
 cons_feat_1 <- c(existing_spa, N2000, fht, pwa, state_f, TFC) # in "terra" you can create a stack simply with c()
 cons_feat_1
