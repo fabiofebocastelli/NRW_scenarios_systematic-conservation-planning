@@ -19,6 +19,65 @@ fht <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università
 pwa <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Potential wilderness areas/PWA_3000_NRW_25832.tif")
 state_f <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Public forest/State_forest_25832.tif")
 TFC <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/forest_cover_NRW_25832.tif")
+
+existing_spa
+class       : SpatRaster 
+dimensions  : 2370, 2513, 1  (nrow, ncol, nlyr)
+resolution  : 100, 100  (x, y)
+extent      : 280329.8, 531629.8, 5578461, 5815461  (xmin, xmax, ymin, ymax)
+coord. ref. : ETRS89 / UTM zone 32N (EPSG:25832) 
+source      : Forest_strictly_protected_25832.tif 
+name        : Forest_strictly_protected_25832 
+min value   :                               1 
+max value   :                               1 
+
+N2000
+class       : SpatRaster 
+dimensions  : 2370, 2513, 1  (nrow, ncol, nlyr)
+resolution  : 100, 100  (x, y)
+extent      : 280329.8, 531629.8, 5578461, 5815461  (xmin, xmax, ymin, ymax)
+coord. ref. : ETRS89 / UTM zone 32N (EPSG:25832) 
+source      : Habitat_directive_FFH_25832.tif 
+name        : Habitat_directive_FFH_25832 
+
+fht
+class       : SpatRaster 
+dimensions  : 2370, 2513, 1  (nrow, ncol, nlyr)
+resolution  : 100, 100  (x, y)
+extent      : 280329.8, 531629.8, 5578461, 5815461  (xmin, xmax, ymin, ymax)
+coord. ref. : ETRS89 / UTM zone 32N (EPSG:25832) 
+source      : forest_habitat_types_25832.tif 
+name        : forest_habitat_types_25832 
+
+pwa
+class       : SpatRaster 
+dimensions  : 2370, 2513, 1  (nrow, ncol, nlyr)
+resolution  : 100, 100  (x, y)
+extent      : 280329.8, 531629.8, 5578461, 5815461  (xmin, xmax, ymin, ymax)
+coord. ref. : ETRS89 / UTM zone 32N (EPSG:25832) 
+source      : PWA_3000_NRW_25832.tif 
+name        : PWA_3000_NRW_25832 
+ 
+state_f
+class       : SpatRaster 
+dimensions  : 2370, 2513, 1  (nrow, ncol, nlyr)
+resolution  : 100, 100  (x, y)
+extent      : 280329.8, 531629.8, 5578461, 5815461  (xmin, xmax, ymin, ymax)
+coord. ref. : ETRS89 / UTM zone 32N (EPSG:25832) 
+source      : State_forest_25832.tif 
+name        : State_forest_25832 
+
+TFC
+class       : SpatRaster 
+dimensions  : 2370, 2513, 1  (nrow, ncol, nlyr)
+resolution  : 100, 100  (x, y)
+extent      : 280329.8, 531629.8, 5578461, 5815461  (xmin, xmax, ymin, ymax)
+coord. ref. : ETRS89 / UTM zone 32N (EPSG:25832) 
+source      : forest_cover_NRW_25832.tif 
+name        : forest_cover_NRW_25832 
+min value   :                    311 
+max value   :                    313 
+
 cons_feat_1 <- c(existing_spa, N2000, fht, pwa, state_f, TFC) # in "terra" you can create a stack simply with c()
 cons_feat_1
 
