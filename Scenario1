@@ -133,14 +133,13 @@ cons_feat_1
 
 # create problem
 p1 <- problem(tfc_costs, cons_feat_1)
-p1
 
 # print number of planning units
 number_of_planning_units(p1)
+[1] 811930
 
 # Add an objective: Minimum set objective - Minimize the cost of the solution whilst ensuring that all targets are met 
 p1 <- problem(tfc_costs, cons_feat_1) %>% add_min_set_objective()
-p1
 
 
 # Add targets
@@ -152,7 +151,6 @@ targets <- c(0, 1.0, 1.0, 0, 0.446, 0) # WARNING: check if the value 0 is correc
 
 # adding targets to the problem
 p1 <- problem(tfc_costs, cons_feat_1) %>% add_min_set_objective() %>% add_relative_targets(targets)
-p1
 
 
 # Add constraints
