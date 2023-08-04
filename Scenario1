@@ -6,11 +6,16 @@ library(terra)
 library(vegan)
 library(cluster)
 library(raster)
+library(gurobi)
+library(slam)
 
 
 # load planning unit data
-tfc_costs <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Prioritizr/TFC_Vit_costs_25_100_25832.tif")
+tfc_costs <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/total_forest_cover_25832.tif")
 tfc_costs
+# creating a new raster with constant costs
+tfc_const_costs <- (tfc_costs*0) + 1
+tfc_const_costs
 
 # loading conservation features
 existing_spa <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Forest strictly protected/Forest_strictly_protected_25832.tif")
@@ -18,7 +23,7 @@ N2000 <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Universit
 fht <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Habitat_types_AnnexI/Dataset_from_Lanuv/forest_habitat_types_reclas_25832.tif") 
 pwa <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Potential wilderness areas/PWA_3000_NRW_25832.tif")
 state_f <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Public forest/State_forest_25832.tif")
-TFC <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/forest_cover_NRW_25832.tif")
+# TFC <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/forest_cover_NRW_25832.tif") maybe not usefull
 
 existing_spa
 class       : SpatRaster 
@@ -85,6 +90,34 @@ unique(fht)
 24                                26
 25                                27
 
+freq(fht)
+   layer value count
+1      1     1   524
+2      1     3  3610
+3      1     4     6
+4      1     5     6
+5      1     6   354
+6      1     7 11409
+7      1     8   181
+8      1     9  2546
+9      1    10    19
+10     1    11  1718
+11     1    12    42
+12     1    13   146
+13     1    14 36484
+14     1    15     7
+15     1    16 23216
+16     1    17   491
+17     1    18  7071
+18     1    19   182
+19     1    21   331
+20     1    22  2653
+21     1    23  1127
+22     1    24     1
+23     1    25   156
+24     1    26     5
+25     1    27     2
+
 pwa
 class       : SpatRaster 
 dimensions  : 2370, 2513, 1  (nrow, ncol, nlyr)
@@ -128,87 +161,139 @@ unique(TFC)
 2                    312
 3                    313
 
-cons_feat_1 <- c(existing_spa, N2000, fht, pwa, state_f, TFC) # in "terra" you can create a stack simply with c()
+
+# create a binary stack for fht raster
+binary_stacked_fht <- binary_stack(fht) # for the first scenario maybe it's better to not consider the different costs related to the status of the forest for several reasons
+                                        # this will be done in the third scenario
+freq(binary_stacked_fht)
+   layer value count
+1      1     0 91763
+2      1     1   524
+3      2     0 92287
+4      3     0 88677
+5      3     1  3610
+6      4     0 92281
+7      4     1     6
+8      5     0 92281
+9      5     1     6
+10     6     0 91933
+11     6     1   354
+12     7     0 80878
+13     7     1 11409
+14     8     0 92106
+15     8     1   181
+16     9     0 89741
+17     9     1  2546
+18    10     0 92268
+19    10     1    19
+20    11     0 90569
+21    11     1  1718
+22    12     0 92245
+23    12     1    42
+24    13     0 92141
+25    13     1   146
+26    14     0 55803
+27    14     1 36484
+28    15     0 92280
+29    15     1     7
+30    16     0 69071
+31    16     1 23216
+32    17     0 91796
+33    17     1   491
+34    18     0 85216
+35    18     1  7071
+36    19     0 92105
+37    19     1   182
+38    20     0 92287
+39    21     0 91956
+40    21     1   331
+41    22     0 89634
+42    22     1  2653
+43    23     0 91160
+44    23     1  1127
+45    24     0 92286
+46    24     1     1
+47    25     0 92131
+48    25     1   156
+49    26     0 92282
+50    26     1     5
+51    27     0 92285
+52    27     1     2
+
+
+# making space for such a big plot
+windows(width = 10, height = 8) 
+# plotting fht binary stacked just to give a look
+par(mfrow = c(5, 6))
+for (i in 1:27) {plot(binary_stacked_fht[[i]], main = paste("Layer", i))} # for some misterious reason some of the layers are plotted as they had only 0 values! ?????
+
+cons_feat_1 <- c(existing_spa, N2000, binary_stacked_fht, pwa, state_f) # plus TFC or not? # in "terra" you can create a stack simply with c()
 cons_feat_1
 
 
 # create problem
-p1 <- problem(tfc_costs, cons_feat_1)
+p1 <- problem(tfc_const_costs, cons_feat_1)
+p1
 
 # print number of planning units
 number_of_planning_units(p1)
 [1] 811930
 
 # Add an objective: Minimum set objective - Minimize the cost of the solution whilst ensuring that all targets are met 
-p1 <- problem(tfc_costs, cons_feat_1) %>% add_min_set_objective()
+p1 <- problem(tfc_const_costs, cons_feat_1) %>% add_min_shortfall_objective(budget = 52351)
 
 
 # Add targets
 
 # setting different relative targets
-targets <- c(0, 1.0, 1.0, 0, 0.446, 0) # WARNING: check if the value 0 is correct for my purpose!!!
+targets <- c(0, 1.0, 1.0, 0, 0) # WARNING: check if the value 0 is correct for my purpose!!!
                                        # Otherwise, I could set the representation targets of 17% based on Aichi Biodiv. Target 11,
-                                       # to provide adequate coverage of each forest habitat type 
+                                       # to provide adequate coverage of each forest habitat type  
 
 # adding targets to the problem
-p1 <- problem(tfc_costs, cons_feat_1) %>% add_min_set_objective() %>% add_relative_targets(targets)
+p1 <- problem(tfc_costs, cons_feat_1) %>% add_min_shortfall_objective(budget = 52351) %>% add_relative_targets(targets)
+# I get the error:
+# Warning:`features` has only zero values. 
+# Error in `add_relative_targets()`:
+# ! `length(targets)` must be 1 or 31.
 
 
 # Add constraints
 
+# preparing data
+not_state_f <- as.int(state_f < 0.5) # this is not working, it gives me the same raster as state_f..
+# trying to get the not_state_forest layer by subtraction between total forest cover and state forest. I need to change the NA values to 0
+tfc_const_costs[is.na(tfc_const_costs)] <- 0 # reclassifying total forest cover layer
+state_f[is.na(state_f)] <- 0
+not_state_f <- tfc_const_costs - state_f
+
 # add locked in/locked out constraints
 p1 <- problem(tfc_costs, cons_feat_1) %>% 
-       add_min_set_objective() %>% 
+       add_min_shortfall_objective(budget = 52351) %>% 
        add_relative_targets(targets) %>% 
        add_locked_in_constraints(pwa) %>% 
-       add_locked_in_constraints(state_f) %>% 
-       add_locked_out_constraints(existing_spa)
+       add_locked_out_constraints(existing_spa) %>%  # locking it out to be sure that the new planning units selected in the solution are outside them and enough to meet the area target
+       add_locked_out_constraints(not_state_f)                                             # or better locking it in and change the target summing up the area of the existing SPA?
 
-# add linear constraints
+
+
+
+
+# no penalties for the moment..
+
+
+
+# adding solver
+
 p1 <- problem(tfc_costs, cons_feat_1) %>% 
-  add_min_set_objective() %>% 
+  add_min_shortfall_objective(budget = 52351) %>% 
   add_relative_targets(targets) %>% 
   add_locked_in_constraints(pwa) %>% 
-  add_locked_in_constraints(state_f) %>% 
-  add_locked_out_constraints(existing_spa) %>%
-  add_linear_constraints(threshold = 52351, sense = "=", data = TFC) %>%
-  add_linear_constraints(threshold = 52351, sense = "=", data = state_f)
+  add_locked_out_constraints(existing_spa) %>% 
+  add_locked_out_constraints(not_state_f)  %>% 
+  add_gurobi_solver(gap = 0)
 
-
-# Add penalties
-
-# add boundary penalties
-p1 <- problem(tfc_costs, cons_feat_1) %>% 
-  add_min_set_objective() %>% 
-  add_relative_targets(targets) %>% 
-  add_locked_in_constraints(pwa) %>% 
-  add_locked_in_constraints(state_f) %>% 
-  add_locked_out_constraints(existing_spa) %>%
-  add_linear_constraints(threshold = 52351, sense = "=", data = TFC) %>%
-  add_linear_constraints(threshold = 52351, sense = "=", data = state_f) %>%
-  add_boundary_penalties(50, 0.5) # I don't know how this will work, it's gonna be a trial-and-error process
-
-# add connectivity penalties
-
-
-
-# solving experiment..
-  
-p1 <- problem(tfc_costs, cons_feat_1) %>% 
-  add_min_set_objective() %>% 
-  add_relative_targets(targets) %>% 
-  add_locked_in_constraints(pwa) %>% 
-  add_locked_in_constraints(state_f) %>% 
-  add_locked_out_constraints(existing_spa) %>%
-  add_linear_constraints(threshold = 52351, sense = "=", data = TFC) %>%
-  add_linear_constraints(threshold = 52351, sense = "=", data = state_f) %>%
-  add_boundary_penalties(50, 0.5) %>% 
-  add_highs_solver(gap = 0, verbose = FALSE)
-
-s <- solve(p1) 
-# I get this error : 
-# Problem failed presolve checks. These failures indicate that numerical issues could stall optimizer or produce incorrect results: ✖ Features must not have target values that are too high (> 1e6).
-# → Try re-scaling the feature data (e.g., convert units from m² to km²).
+# solving with Gurobi
 
 
 
