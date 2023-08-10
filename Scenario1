@@ -26,20 +26,122 @@ state_f <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Univers
 # TFC <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/forest_cover_NRW_25832.tif") maybe not usefull
 
 # create a binary stack for fht raster
-binary_stacked_fht <- binary_stack(fht) # for the first scenario maybe it's better to not consider the different costs related to the status of the forest for several reasons
-                                        # this will be done in the third scenario
-# removing layers with only 0 values 
-binary_stacked_fht_cleaned <- binary_stacked_fht[[minmax(binary_stacked_fht)[2,] != 0]] # the problem now is that all the values shifted!! 
-                                                                                        # I need to keep track of them because each number is a fht
+bstacked_fht <- binary_stack(fht) 
+
+print(bstacked_fht)
+# class       : SpatRaster 
+# dimensions  : 2370, 2513, 25  (nrow, ncol, nlyr)
+# resolution  : 100, 100  (x, y)
+# extent      : 280329.8, 531629.8, 5578461, 5815461  (xmin, xmax, ymin, ymax)
+# coord. ref. : ETRS89 / UTM zone 32N (EPSG:25832) 
+# sources     : spat_nx7E84x54c8tnTN_24884.tif  
+# spat_nx7E84x54c8tnTN_24884.tif  (17 layers) 
+# spat_nx7E84x54c8tnTN_24884.tif  (7 layers) 
+# names       : class_1, class_3, class_4, class_5, class_6, class_7, ... 
+# min values  :       0,       0,       0,       0,       0,       0, ... 
+# max values  :       1,       1,       1,       1,       1,       1, ... 
+
+
+freq(bstacked_fht)
+# layer value count
+# 1      1     0 91763
+# 2      1     1   524
+# 3      2     0 88677
+# 4      2     1  3610
+# 5      3     0 92281
+# 6      3     1     6
+# 7      4     0 92281
+# 8      4     1     6
+# 9      5     0 91933
+# 10     5     1   354
+# 11     6     0 80878
+# 12     6     1 11409
+# 13     7     0 92106
+# 14     7     1   181
+# 15     8     0 89741
+# 16     8     1  2546
+# 17     9     0 92268
+# 18     9     1    19
+# 19    10     0 90569
+# 20    10     1  1718
+# 21    11     0 92245
+# 22    11     1    42
+# 23    12     0 92141
+# 24    12     1   146
+# 25    13     0 55803
+# 26    13     1 36484
+# 27    14     0 92280
+# 28    14     1     7
+# 29    15     0 69071
+# 30    15     1 23216
+# 31    16     0 91796
+# 32    16     1   491
+# 33    17     0 85216
+# 34    17     1  7071
+# 35    18     0 92105
+# 36    18     1   182
+# 37    19     0 91956
+# 38    19     1   331
+# 39    20     0 89634
+# 40    20     1  2653
+# 41    21     0 91160
+# 42    21     1  1127
+# 43    22     0 92286
+# 44    22     1     1
+# 45    23     0 92131
+# 46    23     1   156
+# 47    24     0 92282
+# 48    24     1     5
+# 49    25     0 92285
+# 50    25     1     2
+
+
+# I want to prioritize the cells corresponding to ecologically valuable forests --> cells with not highly damaged forests should have higher values in order to be selected in the cheapest solution when a fixed budget has been set. 
+# the opposite will be done for scenario 3 to prioritize the damaged stands
+
+# loading the high vitality decreased layer
+vit_dec <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Vitality Decrease/vitality_highly_decreased_25832.tif")
+# setting value 0.25 for all the cells. Here the idea is to use this layer's values to replace the corresponding cells' values of my fht layers
+reclass_matrix <- matrix(c(3, 0.25), ncol = 2, byrow = TRUE) 
+vit_dec <-  classify(vit_dec, reclass_matrix)
+vit_dec
+
+print(vit_dec)
+# class       : SpatRaster 
+# dimensions  : 2370, 2513, 1  (nrow, ncol, nlyr)
+# resolution  : 100, 100  (x, y)
+# extent      : 280329.8, 531629.8, 5578461, 5815461  (xmin, xmax, ymin, ymax)
+# coord. ref. : ETRS89 / UTM zone 32N (EPSG:25832) 
+# source(s)   : memory
+# name        : vitality_highly_decreased_25832 
+# min value   :                            0.00 
+# max value   :                            0.25 
+
+# I think I need to replace bstacked_fht layers' values in this way: WHEN bstacked_fht is 'NULL' THEN bstacked_fht is 'NULL'; WHEN bstacked_fht is '0' THEN bstacked_fht is '0'; WHEN bstacked_fht is '1'THEN bstacked_fht is '1' IF not overlap with vit_dec 
+# or '0.25' IF overlap with vit_dec
+# or in other words, replace the values only when bstacked_fht[[i]] > 0.5 and vit_dec > 0.20
+# I tried in many ways with no results. Maybe this is not possible in a binary stacked raster where only binary values are possible.. then HOW?
+
+# WHAT COMES FROM NOW ON HAS BEEN MADE BEFORE THE ATTEMPT TO CONSIDER DIFFERENT VALUES FOR EACH fht LAYERS BASED ON THE FOREST CONDITIONS -- >ALL FEATURES' CELLS WITH VALUE 1
+
+# set names to keep track of all the different fht
+names(bstacked_fht) <- paste0("class_", seq_len(nlyr(bstacked_fht)))
+
+# remove layers with only zeros
+bstacked_fht <- bstacked_fht[[which(global(bstacked_fht, "max", na.rm = TRUE)[[1]] > 0.5)]]                           
 
 # making space for such a big plot
 windows(width = 10, height = 8) 
+
 # plotting fht binary stacked just to give a look
 par(mfrow = c(5, 6))
-for (i in 1:27) {plot(binary_stacked_fht[[i]], main = paste("Layer", i))}
 
+for (i in 1:25) {
+     layer <- bstacked_fht[[i]]  # current layer extraction
+     layer_name <- names(bstacked_fht)[i]  # current layer's name extraction
+     plot(layer, main = layer_name)}  
 
-cons_feat_1 <- c(existing_spa, N2000, binary_stacked_fht, pwa, state_f) # plus TFC or not? # in "terra" you can create a stack simply with c()
+cons_feat_1 <- c(bstacked_fht, existing_spa, pwa, state_f, N2000) # plus TFC or not? # in "terra" you can create a stack simply with c()
 cons_feat_1
 
 
@@ -58,9 +160,9 @@ p1
 # Add targets
 
 # setting different relative targets
-targets <- c(0, 1.0, 1.0, 0, 0) # WARNING: check if the value 0 is correct for my purpose!!!
-                                       # Otherwise, I could set the representation targets of 17% based on Aichi Biodiv. Target 11,
-                                       # to provide adequate coverage of each forest habitat type 
+targets <- c(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+             1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0, 1.0)  # Otherwise, I could set 30% in accordance with the EU biodiversity strategy
+
 
 # adding targets to the problem
 p1 <- problem(tfc_costs, cons_feat_1) %>% add_min_shortfall_objective(budget = 52351) %>% add_relative_targets(targets)
@@ -70,7 +172,7 @@ p1
 # Add constraints
 
 # preparing data
-not_state_f <- as.int(state_f < 0.5) # this is not working, it gives me the same raster..
+# not_state_f <- as.int(state_f < 0.5) # this is not working, it gives me the same raster..
 # trying to get the not_state_forest layer by subtraction between total forest cover and state forest. I need to change the NA values to 0
 tfc_const_costs[is.na(tfc_const_costs)] <- 0 # reclassifying total forest cover layer
 state_f[is.na(state_f)] <- 0 # reclassifying state layer
@@ -101,4 +203,53 @@ p1 <- problem(tfc_costs, cons_feat_1) %>%
   add_gurobi_solver(gap = 0)
 
 # solving with Gurobi
+s1 <- solve(p1)
+
+# Error in `solve()`:
+#  ! Problem failed presolve checks.
+
+# These checks indicate that solutions might not identify meaningful priority areas:
   
+#  ✖ Most of the planning units do not have a single feature inside them.
+# → This indicates that more features are needed.
+
+# ℹ For more information, see `presolve_check()`.
+# ℹ To ignore checks and attempt optimization anyway, use `solve(force = TRUE)`.
+
+s1 <- solve(p1, force = TRUE)
+
+
+# Gurobi Optimizer version 10.0.2 build v10.0.2rc0 (win64)
+# 
+# CPU model: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz, instruction set [SSE2|AVX|AVX2|AVX512]
+# Thread count: 4 physical cores, 8 logical processors, using up to 1 threads
+# 
+# Optimize a model with 30 rows, 819919 columns and 1273808 nonzeros
+# Model fingerprint: 0xf3e7b4f5
+# Variable types: 29 continuous, 819890 integer (819890 binary)
+# Coefficient statistics:
+#   Matrix range     [1e+00, 1e+00]
+# Objective range  [5e-06, 1e+00]
+# Bounds range     [1e+00, 1e+00]
+# RHS range        [1e+00, 2e+05]
+# Found heuristic solution: objective 24.5174909
+# Presolve removed 30 rows and 819919 columns
+# Presolve time: 0.57s
+# Presolve: All rows and columns removed
+# 
+# Explored 0 nodes (0 simplex iterations) in 0.93 seconds (0.40 work units)
+# Thread count was 1 (of 8 available processors)
+# 
+# Solution count 2: 21.041 24.5175 
+# 
+# Optimal solution found (tolerance 0.00e+00)
+# Best objective 2.104098704972e+01, best bound 2.104098704972e+01, gap 0.0000%
+
+
+plot(s1)
+
+
+
+
+
+
