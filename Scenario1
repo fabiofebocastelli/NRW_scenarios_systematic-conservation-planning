@@ -122,7 +122,7 @@ print(vit_dec)
 # or in other words, replace the values only when bstacked_fht[[i]] > 0.5 and vit_dec > 0.20
 # I tried in many ways with no results. Maybe this is not possible in a binary stacked raster where only binary values are possible.. then HOW?
 
-# WHAT COMES FROM NOW ON HAS BEEN MADE BEFORE THE ATTEMPT TO CONSIDER DIFFERENT VALUES FOR EACH fht LAYERS BASED ON THE FOREST CONDITIONS -- >ALL FEATURES' CELLS WITH VALUE 1
+# WHAT COMES FROM NOW ON HAS BEEN DONE BEFORE THE ATTEMPT TO CONSIDER DIFFERENT VALUES FOR EACH fht LAYERS BASED ON THE FOREST CONDITIONS -- >ALL FEATURES' CELLS WITH VALUE 1
 
 # set names to keep track of all the different fht
 names(bstacked_fht) <- paste0("class_", seq_len(nlyr(bstacked_fht)))
