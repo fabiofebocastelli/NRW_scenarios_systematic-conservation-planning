@@ -119,19 +119,82 @@ print(vit_dec)
 # min value   :                            0.00 
 # max value   :                            0.25 
 
+# set names to keep track of all the different fht
+names(bstacked_fht) <- paste0("class_", seq_len(nlyr(bstacked_fht)))
+
+# remove layers with only zeros
+bstacked_fht <- bstacked_fht[[which(global(bstacked_fht, "max", na.rm = TRUE)[[1]] > 0.5)]]
+
 # I think I need to replace bstacked_fht layers' values in this way: WHEN bstacked_fht is 'NULL' THEN bstacked_fht is 'NULL'; WHEN bstacked_fht is '0' THEN bstacked_fht is '0'; WHEN bstacked_fht is '1'THEN bstacked_fht is '1' IF not overlap with vit_dec 
 # or '0.25' IF overlap with vit_dec
 # or in other words, replace the values only when bstacked_fht[[i]] > 0.5 and vit_dec > 0.20
 # I tried in many ways with no results. Maybe this is not possible in a binary stacked raster where only binary values are possible.. then HOW?
 
-# WHAT COMES FROM NOW ON HAS BEEN DONE BEFORE THE ATTEMPT TO CONSIDER DIFFERENT VALUES FOR EACH fht LAYERS BASED ON THE FOREST CONDITIONS -- >ALL FEATURES' CELLS WITH VALUE 1
+# trying this way:
+modified_bstacked_fht <-  terra::rast(lapply(as.list(bstacked_fht), function(x) {
+  terra::mask(x, mask = (x > 0.5) & (vit_dec == 0.25), maskvalues = 1, updatevalue = 0.25)
+}))
 
-# set names to keep track of all the different fht
-names(bstacked_fht) <- paste0("class_", seq_len(nlyr(bstacked_fht)))
+# it seems to have worked, even though frequencies still have only values 0 and 1
 
-# remove layers with only zeros
-bstacked_fht <- bstacked_fht[[which(global(bstacked_fht, "max", na.rm = TRUE)[[1]] > 0.5)]]                           
+freq(modified_bstacked_fht)
+# layer value count
+# 1      1     0 91779
+# 2      1     1   508
+# 3      2     0 88853
+# 4      2     1  3434
+# 5      3     0 92281
+# 6      3     1     6
+# 7      4     0 92282
+# 8      4     1     5
+# 9      5     0 91934
+# 10     5     1   353
+# 11     6     0 81150
+# 12     6     1 11137
+# 13     7     0 92108
+# 14     7     1   179
+# 15     8     0 89831
+# 16     8     1  2456
+# 17     9     0 92268
+# 18     9     1    19
+# 19    10     0 90610
+# 20    10     1  1677
+# 21    11     0 92246
+# 22    11     1    41
+# 23    12     0 92145
+# 24    12     1   142
+# 25    13     0 56786
+# 26    13     1 35501
+# 27    14     0 92282
+# 28    14     1     5
+# 29    15     0 69346
+# 30    15     1 22941
+# 31    16     0 91799
+# 32    16     1   488
+# 33    17     0 85275
+# 34    17     1  7012
+# 35    18     0 92106
+# 36    18     1   181
+# 37    19     0 91961
+# 38    19     1   326
+# 39    20     0 89657
+# 40    20     1  2630
+# 41    21     0 91177
+# 42    21     1  1110
+# 43    22     0 92286
+# 44    22     1     1
+# 45    23     0 92135
+# 46    23     1   152
+# 47    24     0 92282
+# 48    24     1     5
+# 49    25     0 92286
+# 50    25     1     1
 
+
+
+### WHAT COMES FROM NOW ON HAS BEEN DONE BEFORE THE ATTEMPT TO CONSIDER DIFFERENT VALUES FOR EACH fht LAYERS BASED ON THE FOREST CONDITIONS -- >ALL FEATURES' CELLS WITH VALUE 1
+
+                           
 # making space for such a big plot
 windows(width = 10, height = 8) 
 
