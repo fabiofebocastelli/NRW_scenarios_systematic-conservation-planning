@@ -19,6 +19,9 @@ tfc_costs
 tfc_const_costs <- (tfc_costs*0) + 1
 tfc_const_costs
 
+# print number of planning units
+number_of_planning_units(p1)
+
 # loading conservation features
 existing_spa <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Forest strictly protected/Forest_strictly_protected_25832.tif")
 N2000 <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Occurrence of FFH habitat types in North Rhine-Westphalia/Habitat_directive_FFH_25832.tif")
@@ -190,10 +193,6 @@ freq(modified_bstacked_fht)
 # 49    25     0 92286
 # 50    25     1     1
 
-
-
-### WHAT COMES FROM NOW ON HAS BEEN DONE BEFORE THE ATTEMPT TO CONSIDER DIFFERENT VALUES FOR EACH fht LAYERS BASED ON THE FOREST CONDITIONS -- >ALL FEATURES' CELLS WITH VALUE 1
-
                            
 # making space for such a big plot
 windows(width = 10, height = 8) 
@@ -202,11 +201,11 @@ windows(width = 10, height = 8)
 par(mfrow = c(5, 6))
 
 for (i in 1:25) {
-     layer <- bstacked_fht[[i]]  # current layer extraction
-     layer_name <- names(bstacked_fht)[i]  # current layer's name extraction
-     plot(layer, main = layer_name)}  
+     layer <- modified_bstacked_fht[[i]]  # current layer extraction
+     layer_name <- names(modified_bstacked_fht)[i]  # current layer's name extraction
+     plot(layer, main = layer_name)}   
 
-cons_feat_1 <- c(bstacked_fht, existing_spa, pwa, state_f, N2000) # plus TFC or not? # in "terra" you can create a stack simply with c()
+cons_feat_1 <- c(modified_bstacked_fht, existing_spa, pwa, state_f, N2000) 
 cons_feat_1
 
 
@@ -214,8 +213,6 @@ cons_feat_1
 p1 <- problem(tfc_const_costs, cons_feat_1)
 p1
 
-# print number of planning units
-number_of_planning_units(p1)
 
 # Add an objective: Minimum set objective - Minimize the cost of the solution whilst ensuring that all targets are met 
 p1 <- problem(tfc_const_costs, cons_feat_1) %>% add_min_shortfall_objective(budget = 52351)
@@ -225,8 +222,8 @@ p1
 # Add targets
 
 # setting different relative targets
-targets <- c(1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
-             1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0, 0, 0, 1.0)  # Otherwise, I could set 30% in accordance with the EU biodiversity strategy
+targets <- c(0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 
+             0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0, 0, 0, 0.3) # based on the 30% of protected land EU target
 
 
 # adding targets to the problem
@@ -290,28 +287,42 @@ s1 <- solve(p1, force = TRUE)
 # Thread count: 4 physical cores, 8 logical processors, using up to 1 threads
 # 
 # Optimize a model with 30 rows, 819919 columns and 1273808 nonzeros
-# Model fingerprint: 0xf3e7b4f5
+# Model fingerprint: 0x7aa8caab
 # Variable types: 29 continuous, 819890 integer (819890 binary)
 # Coefficient statistics:
-#   Matrix range     [1e+00, 1e+00]
-# Objective range  [5e-06, 1e+00]
+#   Matrix range     [3e-01, 1e+00]
+# Objective range  [2e-05, 3e+00]
 # Bounds range     [1e+00, 1e+00]
-# RHS range        [1e+00, 2e+05]
-# Found heuristic solution: objective 24.5174909
+# RHS range        [3e-01, 6e+04]
+# Found heuristic solution: objective 23.8638700
+# Found heuristic solution: objective 23.8638700
 # Presolve removed 30 rows and 819919 columns
-# Presolve time: 0.57s
+# Presolve time: 0.21s
 # Presolve: All rows and columns removed
 # 
-# Explored 0 nodes (0 simplex iterations) in 0.93 seconds (0.40 work units)
+# Explored 0 nodes (0 simplex iterations) in 0.41 seconds (0.32 work units)
 # Thread count was 1 (of 8 available processors)
 # 
-# Solution count 2: 21.041 24.5175 
+# Solution count 3: 13.8361 23.8639 23.8639 
 # 
 # Optimal solution found (tolerance 0.00e+00)
-# Best objective 2.104098704972e+01, best bound 2.104098704972e+01, gap 0.0000%
+# Best objective 1.383613338265e+01, best bound 1.383613338265e+01, gap 0.0000%
 
 
 plot(s1)
+
+# evaluating the solution
+
+# calculate statistic 
+# cost summary
+eval_cost_summary(p1, s1)
+
+# Feature representation summary
+eval_feature_representation_summary(p1, s1)
+
+# Target coverage summary
+# calculate statistics
+eval_target_coverage_summary(p1, s1)
 
 
 
