@@ -1,0 +1,16 @@
+# ignore large data files
+input-data/*.tif
+
+# R profile files
+*.Rproj.user
+*.Rhistory
+
+# log files
+gurobi.log
+/*.Rout
+
+# system files
+.directory
+
+# do not ignore the following files
+!*.gitkeep
