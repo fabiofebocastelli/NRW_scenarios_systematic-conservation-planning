@@ -1,4 +1,4 @@
-# Scenario 1b
+# Scenario 1 
 
 library(prioritizr)
 library(sf)
@@ -7,7 +7,7 @@ library(vegan)
 library(cluster)
 library(raster)
 library(gurobi)
-library(slam)
+#library(slam)
 
 
 # load planning unit data
@@ -55,18 +55,6 @@ names(bstacked_fht) <- paste0("class_", seq_len(nlyr(bstacked_fht)))
 bstacked_fht <- bstacked_fht[[which(global(bstacked_fht, "max", na.rm = TRUE)[[1]] > 0.5)]]   
 
 
-# making space for such a big plot
-windows(width = 10, height = 8) 
-
-# plotting fht binary stacked just to give a look
-par(mfrow = c(5, 6))
-
-for (i in 1:25) {
-     layer <- modified_bstacked_fht[[i]]  # current layer extraction
-     layer_name <- names(modified_bstacked_fht)[i]  # current layer's name extraction
-     plot(layer, main = layer_name)}  
-
-
 cons_feat_1b <- c(bstacked_fht, existing_spa, pwa, state_f, N2000, tfc_feature)
 
 
@@ -90,8 +78,6 @@ wild_targets <- c(
 bd <- rescale_matrix(boundary_matrix(tfc_const_costs))
 
 
-
-
 # Add constraints
 
 # preparing data
@@ -100,10 +86,15 @@ tfc_const_costs[is.na(tfc_const_costs)] <- 0 # reclassifying total forest cover 
 state_f[is.na(state_f)] <- 0 # reclassifying state layer
 not_state_f <- tfc_const_costs - state_f
 
-# I want to give the gihest priority to the creation of big wilderness areas
+# now I want to change the 0 values back to NA
+tfc_const_costs[tfc_const_costs == 0] <- NA
+state_f[state_f == 0] <- NA
+not_state_f[not_state_f == 0] <- NA
+
+# I want to give the highest priority to the creation of big wilderness areas
 
 p1.b <-
-  problem(tfc_const_costs * 0, cons_feat_1) %>%
+  problem(tfc_const_costs * 0, cons_feat_1b) %>%
   add_boundary_penalties(penalty = 1, data = bd) %>%
   add_min_set_objective() %>%
   add_linear_constraints(
@@ -114,7 +105,7 @@ p1.b <-
   add_locked_out_constraints(not_state_f) %>%
   add_locked_in_constraints(pwa) %>%
   add_locked_in_constraints(existing_spa) %>%
-  add_gurobi_solver(gap = 0) # it gives me an ERROR!
+  add_gurobi_solver(gap = 0)                         #### solve() gives an error with this problem!
 
 #trial&error process
 
@@ -139,7 +130,7 @@ p1.b <-
   add_locked_out_constraints(not_state_f) %>%
   add_locked_out_constraints(existing_spa)%>%
   add_locked_in_constraints(pwa) %>%
-  add_gurobi_solver(gap = 0)
+  add_gurobi_solver(gap = 0)                               #### this works
 
 # solving with Gurobi
 
