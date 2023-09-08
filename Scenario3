@@ -83,7 +83,7 @@ p3 <-
   ) %>%
   add_linear_constraints(
     threshold = 39254,
-    sense = "=",
+    sense = "<=",
     data = modified_eligible_f
   ) %>%
   add_locked_in_constraints(existing_spa) %>%
