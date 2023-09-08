@@ -95,12 +95,17 @@ p1
 # Add constraints
 
 # preparing data
-# not_state_f <- as.int(state_f < 0.5) # this is not working, it gives me the same raster..
-# trying to get the not_state_forest layer by subtraction between total forest cover and state forest. I need to change the NA values to 0
+
+# not_state_f <- tfc_const_costs - state_f
+# not_state_f[is.na(not_state_f)] <- 0  # Idk why but these codes returned me the not_state_f layer with only 0 values.
+
+#I tryied this way I I think it works...
+## trying to get the not_state_forest layer by subtraction between total forest cover and state forest. I need to change the NA values to 0
 tfc_const_costs[is.na(tfc_const_costs)] <- 0 # reclassifying total forest cover layer
 state_f[is.na(state_f)] <- 0 # reclassifying state layer
 not_state_f <- tfc_const_costs - state_f
-# now I want to change the 0 values back to NA
+
+## now I want to change the 0 values back to NA
 tfc_const_costs[tfc_const_costs == 0] <- NA
 state_f[state_f == 0] <- NA
 not_state_f[not_state_f == 0] <- NA
