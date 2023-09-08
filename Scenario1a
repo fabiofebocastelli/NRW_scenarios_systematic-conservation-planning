@@ -7,7 +7,7 @@ library(vegan)
 library(cluster)
 library(raster)
 library(gurobi)
-library(slam)
+#library(slam)
 
 
 # load planning unit data
@@ -18,8 +18,6 @@ tfc_costs
 tfc_const_costs <- (tfc_costs*0) + 1
 tfc_const_costs
 
-# print number of planning units
-number_of_planning_units(p1)
 
 # loading conservation features
 existing_spa <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Forest strictly protected/Forest_strictly_protected_25832_revised.tif")
@@ -27,7 +25,13 @@ N2000 <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Universit
 fht <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Habitat_types_AnnexI/Dataset_from_Lanuv/forest_habitat_types_reclas_25832.tif") 
 pwa <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Potential wilderness areas/PWA_3000_NRW_25832.tif")
 state_f <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Public forest/State_forest_25832.tif")
-# update values in tfc feature to consider it as a conservation feature 
+# loading the high vitality decreased layer
+vit_dec <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Vitality Decrease/vitality_highly_decreased_25832.tif")
+# setting value 0.25 for all the cells
+reclass_matrix <- matrix(c(3, 0.25), ncol = 2, byrow = TRUE)
+vit_dec <-  classify(vit_dec, reclass_matrix)
+
+# update values in tfc feature
 tfc_feature <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/total_forest_cover_25832.tif")
 tfc_feature <- terra::mask(
   tfc_feature,
@@ -40,21 +44,14 @@ names(tfc_feature) <- "tfc_feature"
 # create a binary stack for fht raster
 bstacked_fht <- binary_stack(fht) 
 
-# I want to prioritize the cells corresponding to ecologically valuable forests --> cells with not highly damaged forest should have higher values in order
-# to be selected in the cheapest solution when a fixed budget has been set. 
-
-# loading the high vitality decreased layer
-vit_dec <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Vitality Decrease/vitality_highly_decreased_25832.tif")
-# setting value 0.25 for all the cells
-reclass_matrix <- matrix(c(3, 0.25), ncol = 2, byrow = TRUE)
-vit_dec <-  classify(vit_dec, reclass_matrix)
-
-
 # set names to keep track of all the different fht
 names(bstacked_fht) <- paste0("class_", seq_len(nlyr(bstacked_fht)))
 
 # remove layers with only zeros
-bstacked_fht <- bstacked_fht[[which(global(bstacked_fht, "max", na.rm = TRUE)[[1]] > 0.5)]]   
+bstacked_fht <- bstacked_fht[[which(global(bstacked_fht, "max", na.rm = TRUE)[[1]] > 0.5)]]  
+
+# I want to prioritize the cells corresponding to ecologically valuable forests --> cells with not highly damaged forest should have higher values in order
+# to be selected in the cheapest solution when a fixed budget has been set. 
 
 # I need to change bstacked_fht layers values in this way: WHEN 'NULL' THEN 'NULL'; WHEN '0' THEN '0'; WHEN '1'THEN '1' IF not overlap with vit_dec
 # or '0.25' IF overlap with vit_dec
@@ -66,25 +63,8 @@ modified_bstacked_fht <-  terra::rast(lapply(as.list(bstacked_fht), function(x) 
 }))
 
 
-# making space for such a big plot
-windows(width = 10, height = 8) 
-
-# plotting fht binary stacked just to give a look
-par(mfrow = c(5, 6))
-
-for (i in 1:25) {
-     layer <- modified_bstacked_fht[[i]]  # current layer extraction
-     layer_name <- names(modified_bstacked_fht)[i]  # current layer's name extraction
-     plot(layer, main = layer_name)}  
-
-# creating the conservation feature object
+# creating the conservation features object
 cons_feat_1 <- c(modified_bstacked_fht, existing_spa, pwa, state_f, N2000, tfc_feature)
-cons_feat_1
-
-
-# create problem
-p1 <- problem(tfc_const_costs, cons_feat_1)
-p1
 
 
 # Add an objective: Minimum set objective - Minimize the cost of the solution whilst ensuring that all targets are met 
@@ -94,7 +74,7 @@ freq(existing_spa) # 29606
 p1 <- problem(tfc_const_costs, cons_feat_1) %>% add_min_shortfall_objective(budget = 90092)
 
 
-# Adding targets
+# Add targets
 
 # setting different relative targets
 targets <- c(
@@ -103,7 +83,7 @@ targets <- c(
   0,                                     ## >= 0% coverage of pwa
   0,                                     ## >= 0% coverage of state_f
   0.3,                                    ## >= 30% coverage of N2000,
-  1                                      ## >= 100% tfc_feature
+  1                                      ## >= 100%
 )
 
 
@@ -115,26 +95,19 @@ p1
 # Add constraints
 
 # preparing data
+# not_state_f <- as.int(state_f < 0.5) # this is not working, it gives me the same raster..
 # trying to get the not_state_forest layer by subtraction between total forest cover and state forest. I need to change the NA values to 0
 tfc_const_costs[is.na(tfc_const_costs)] <- 0 # reclassifying total forest cover layer
 state_f[is.na(state_f)] <- 0 # reclassifying state layer
 not_state_f <- tfc_const_costs - state_f
+# now I want to change the 0 values back to NA
+tfc_const_costs[tfc_const_costs == 0] <- NA
+state_f[state_f == 0] <- NA
+not_state_f[not_state_f == 0] <- NA
 
 
-# add locked in/locked out constraints
-p1 <- problem(tfc_const_costs, cons_feat_1) %>% 
-       add_min_shortfall_objective(budget = 90092) %>% 
-       add_relative_targets(targets) %>% 
-       add_locked_in_constraints(pwa) %>% 
-       add_locked_in_constraints(existing_spa) %>%  
-       add_locked_out_constraints(not_state_f)                                            
+# no boundary/connectivity penalties here
 
-
-
-# no boundary/connectivity penalties 
-
-
-# adding solver
 
 p1 <- problem(tfc_const_costs, cons_feat_1) %>% 
   add_min_shortfall_objective(budget = 90092) %>% 
@@ -144,48 +117,10 @@ p1 <- problem(tfc_const_costs, cons_feat_1) %>%
   add_locked_out_constraints(not_state_f)  %>% 
   add_gurobi_solver(gap = 0)
 
+
 # solving with Gurobi
 s1 <- solve(p1)
 
-# Error in `solve()`:
-#  ! Problem failed presolve checks.
-
-# These checks indicate that solutions might not identify meaningful priority areas:
-  
-#  ✖ Most of the planning units do not have a single feature inside them.
-# → This indicates that more features are needed.
-
-# ℹ For more information, see `presolve_check()`.
-# ℹ To ignore checks and attempt optimization anyway, use `solve(force = TRUE)`.
-
-s1 <- solve(p1, force = TRUE)
-
-
-# Gurobi Optimizer version 10.0.2 build v10.0.2rc0 (win64)
-# 
-# CPU model: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz, instruction set [SSE2|AVX|AVX2|AVX512]
-# Thread count: 4 physical cores, 8 logical processors, using up to 1 threads
-# 
-# Optimize a model with 30 rows, 819919 columns and 1273808 nonzeros
-# Model fingerprint: 0xf3e7b4f5
-# Variable types: 29 continuous, 819890 integer (819890 binary)
-# Coefficient statistics:
-#   Matrix range     [1e+00, 1e+00]
-# Objective range  [5e-06, 1e+00]
-# Bounds range     [1e+00, 1e+00]
-# RHS range        [1e+00, 2e+05]
-# Found heuristic solution: objective 24.5174909
-# Presolve removed 30 rows and 819919 columns
-# Presolve time: 0.57s
-# Presolve: All rows and columns removed
-# 
-# Explored 0 nodes (0 simplex iterations) in 0.93 seconds (0.40 work units)
-# Thread count was 1 (of 8 available processors)
-# 
-# Solution count 2: 21.041 24.5175 
-# 
-# Optimal solution found (tolerance 0.00e+00)
-# Best objective 2.104098704972e+01, best bound 2.104098704972e+01, gap 0.0000%
 
 plot(s1)
 
@@ -195,8 +130,31 @@ plot(s1)
 # cost summary
 eval_cost_summary(p1, s1)
 
+
 # Feature representation summary
 eval_feature_representation_summary(p1, s1)
+
+#evaluate improvements
+existing_spa_solution <- mask(existing_spa, tfc_const_costs)
+
+x1 <- eval_feature_representation_summary(p1, s1)
+
+x2 <- eval_feature_representation_summary(
+  p1,
+  existing_spa_solution
+)
+
+# Error in `planning_unit_solution_status()`:
+# ! `solution` must have missing (NA) values in exactly the same planning units as the cost data for `x`.
+
+
+# value 0.3 === 30%
+x1$relative_improvement <-
+  x1$relative_held - x2$relative_held
+# value of 0.4 === 40%        # 10%
+
+x1$percent_improvement <- x1$relative_improvement * 100
+
 
 # Target coverage summary
 # calculate statistics
