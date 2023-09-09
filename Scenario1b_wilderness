@@ -137,7 +137,7 @@ p1.b <-
 s1.b <- solve(p1.b, force = TRUE)
 
 
-plot(s1.b)
+plot(s1.b)    ### issue: the spatial solution included also not state forest
 
 # evaluating the solution
 
