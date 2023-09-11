@@ -104,9 +104,16 @@ p1 <-
   add_min_set_objective() %>%
   add_relative_targets(wild_targets)
 
+
 # generate solution
 ## initialize with empty solution raster polygons
-s1 <- tfc_const_costs * 0
+existing_spa_solution <- mask(
+  subst(existing_spa, NA, 0),
+  tfc_const_costs
+)
+
+## iteratively add in places
+s1 <- deepcopy(existing_spa_solution)
 for (i in seq_len(nrow(pwa_vector))) {
   # add progress message
   message("starting iteration ", i)
@@ -143,10 +150,7 @@ eval_cost_summary(p1, s1)
 eval_feature_representation_summary(p1, s1)
 
 ## evaluate improvements
-existing_spa_solution <- mask(
-  subst(existing_spa, NA, 0),
-  tfc_const_costs
-)
+
 
 x1 <- eval_feature_representation_summary(p1, s1)
 x2 <- eval_feature_representation_summary(
