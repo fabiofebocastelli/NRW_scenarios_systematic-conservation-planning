@@ -13,11 +13,9 @@ library(gurobi)
 
 # load planning unit data
 tfc_costs <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/total_forest_cover_25832.tif")
-tfc_costs
 
 # creating a new raster with constant costs
 tfc_const_costs <- (tfc_costs*0) + 1
-tfc_const_costs
 
 # loading conservation features
 existing_spa <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Forest strictly protected/Forest_strictly_protected_25832_revised.tif")
@@ -43,7 +41,7 @@ vit_dec <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Univers
 
 # setting value 1 for all the cells
 reclass_matrix_vt_3 <- matrix(c(0.25, 1), ncol = 2, byrow = TRUE)
-vit_dec <-  classify(vit_dec, reclass_matrix_vt_3)
+vit_dec_3 <-  classify(vit_dec, reclass_matrix_vt_3)
 
 
 # I need to change eligible_f layer values in this way: when overlap with vit_dec-> value 1, when it doesn't overlap-> 0.25
@@ -66,7 +64,7 @@ targets3 <- c(
   0.3,                                   ## >= 30% coverage of N2000
   0,                                     ##  >= 0% coverage of existing_spa
   0,                                     ## >= 0% coverage of state_f
-  0                                     ## eligible_f
+  0                                      ## eligible_f
 )
 
 
@@ -109,6 +107,8 @@ p3 <-
 
 
 s3 <- solve(p3, force = TRUE) #
+
+plot(s3)
 
 # evaluating the solution
 
