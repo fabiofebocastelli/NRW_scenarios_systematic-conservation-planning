@@ -86,25 +86,6 @@ p3 <-
   add_locked_out_constraints(existing_spa) %>%
   add_gurobi_solver(gap = 0)
 
-# not needed at the end:
-# p3_real <-
-#  problem(tfc_const_costs, cons_feat_3) %>%
-#  add_min_shortfall_objective(budget = 90092) %>%
-#  add_relative_targets(targets3) %>%
-#  add_linear_constraints(
-#    threshold = 21662,
-#    sense = "<=",
-#    data = state_f
-#  ) %>%
-#  add_linear_constraints(
-#    threshold = 39254,
-#    sense = "<=",
-#    data = modified_eligible_f
-#  ) %>%
-#  add_locked_in_constraints(existing_spa) %>%
-#  add_neighbor_constraints(k = 3) %>%
-#  add_gurobi_solver(gap = 0)
-
 
 s3 <- solve(p3, force = TRUE) #
 
