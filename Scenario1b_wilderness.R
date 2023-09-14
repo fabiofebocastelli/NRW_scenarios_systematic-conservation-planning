@@ -107,8 +107,6 @@ wild_targets <- c(
 )
 
 
-
-
 # create problem to evaluate solution
 p1_wild <-
   problem(tfc_const_costs, cons_feat_wild) %>%
@@ -149,19 +147,24 @@ for (i in seq_len(nrow(pwa_vector))) {
 }
 
 
-plot(s1_wild)
+#s1_wild has 2 cells with value 2, I change them into value 1
+reclass_matrix_1b <- matrix(c(2, 1), ncol = 2, byrow = TRUE)
+s1_wild_reclass <-  classify(s1_wild, reclass_matrix_1b)
+
+
+plot(s1_wild_reclass)
 
 # evaluating the solution
 
 # calculate statistic 
 # cost summary
-eval_cost_summary(p1, s1_wild)
+eval_cost_summary(p1, s1_wild_reclass)
 
 # Feature representation summary
-print(eval_feature_representation_summary(p1_wild, s1_wild), n=30)
+print(eval_feature_representation_summary(p1_wild, s1_wild_reclass), n=30)
 
 # Target coverage summary
 # calculate statistics
-print(eval_target_coverage_summary(p1_wild, s1_wild), n=30)
+print(eval_target_coverage_summary(p1_wild, s1_wild_reclass), n=30)
 
 
