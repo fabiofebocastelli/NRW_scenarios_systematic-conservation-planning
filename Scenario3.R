@@ -71,7 +71,7 @@ targets3 <- c(
 # setting the problem 
 p3 <-
   problem(tfc_const_costs, cons_feat_3) %>%
-  add_min_shortfall_objective(budget = 90092) %>%
+  add_min_shortfall_objective(budget = 60486) %>%
   add_relative_targets(targets3) %>%
   add_linear_constraints(
     threshold = 21662,
@@ -83,7 +83,7 @@ p3 <-
     sense = "<=",
     data = modified_eligible_f
   ) %>%
-  add_locked_in_constraints(existing_spa) %>%
+  add_locked_out_constraints(existing_spa) %>%
   add_gurobi_solver(gap = 0)
 
 # not needed at the end:
