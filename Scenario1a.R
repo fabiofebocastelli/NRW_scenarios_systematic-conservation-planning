@@ -99,9 +99,9 @@ targets <- c(
 # create problem
 ## no boundary/connectivity penalties here
 p1 <- problem(tfc_const_costs, cons_feat_1) %>%
-  add_min_shortfall_objective(budget = 90092) %>%
+  add_min_shortfall_objective(budget = 60486) %>%
   add_relative_targets(targets) %>%
-  add_locked_in_constraints(existing_spa) %>%
+  add_locked_out_constraints(existing_spa) %>%
   add_locked_out_constraints(not_state_f)  %>%
   add_gurobi_solver(gap = 0)
 
