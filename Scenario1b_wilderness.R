@@ -106,66 +106,7 @@ wild_targets <- c(
   0                                    ## tfc_feature, should it be 1, or 0 ?
 )
 
-################################################################################################################
-# bd <- rescale_matrix(boundary_matrix(tfc_const_costs))
 
-
-# Add constraints
-
-# # preparing data
-# # trying to get the not_state_forest layer by subtraction between total forest cover and state forest. I need to change the NA values to 0
-# tfc_const_costs[is.na(tfc_const_costs)] <- 0 # reclassifying total forest cover layer
-# state_f[is.na(state_f)] <- 0 # reclassifying state layer
-# not_state_f <- tfc_const_costs - state_f
-# 
-# # now I want to change the 0 values back to NA
-# tfc_const_costs[tfc_const_costs == 0] <- NA
-# state_f[state_f == 0] <- NA
-# not_state_f[not_state_f == 0] <- NA
-
-# I want to give the highest priority to the creation of big wilderness areas
-
-# p1.b <-
-#   problem(tfc_const_costs * 0, cons_feat_1b) %>%
-#   add_boundary_penalties(penalty = 1, data = bd) %>%
-#   add_min_set_objective() %>%
-#   add_linear_constraints(
-#     threshold = 90092,
-#     sense = "=",
-#     data = tfc_const_costs) %>%
-#   add_relative_targets(wild_targets) %>%
-#   add_locked_out_constraints(not_state_f) %>%
-#   add_locked_in_constraints(pwa) %>%
-#   add_locked_in_constraints(existing_spa) %>%
-#   add_gurobi_solver(gap = 0) # error!
-
-#trial&error process
-
-# Removing only add_locked_out_constraints(not_state_f) gives the same error.
-# Removing only add_locked_in_constraints(pwa) %>% add_locked_in_constraints(existing_spa) works.
-# Lowering the penalty to 0.1 gives the same error.
-# Changing to add_linear_constraints(threshold = 90092, sense = "=", data = tfc_feature) gives the same error.
-# With a lower threshold of 10000, it gives the same error.
-# Removing only add_locked_in_constraints(existing_spa) works.
-# Adding add_locked_out_constraints(existing_spa) works. (see below)
-
-
-
-# p1.b <-
-#   problem(tfc_const_costs * 0, cons_feat_1) %>%
-#   add_boundary_penalties(penalty = 1, data = bd) %>%
-#   add_min_set_objective() %>%
-#   add_linear_constraints(
-#     threshold = 90092,
-#     sense = "=",
-#     data = tfc_const_costs) %>%
-#   add_relative_targets(wild_targets) %>%
-#   add_locked_out_constraints(not_state_f) %>%
-#   add_locked_out_constraints(existing_spa)%>%
-#   add_locked_in_constraints(pwa) %>%
-#   add_gurobi_solver(gap = 0)
-
-################################################################################################################
 
 
 # create problem to evaluate solution
@@ -175,8 +116,6 @@ p1_wild <-
   add_relative_targets(wild_targets) %>%
   add_locked_out_constraints(not_state_f)%>%
   add_locked_out_constraints(existing_spa)
-
-
 
 
 # generate solution
