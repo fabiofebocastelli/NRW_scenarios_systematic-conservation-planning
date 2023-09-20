@@ -11,26 +11,26 @@ library(dplyr)
 
 
 # load planning unit data
-tfc_costs <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/total_forest_cover_25832.tif")
+tfc_costs <- rast("input-data/total_forest_cover_25832.tif")
 
 # creating a new raster with constant costs
 tfc_const_costs <- (tfc_costs*0) + 1
 
 # loading conservation features
-existing_spa <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Forest strictly protected/Forest_strictly_protected_25832_revised.tif")
-N2000 <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Occurrence of FFH habitat types in North Rhine-Westphalia/Habitat_directive_FFH_25832.tif")
-fht <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Habitat_types_AnnexI/Dataset_from_Lanuv/forest_habitat_types_reclas_25832.tif") 
-pwa_3000 <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Potential wilderness areas/PWA_3000_NRW_25832.tif")
-state_f <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Public forest/State_forest_25832.tif")
+existing_spa <- rast("input-data/Forest_strictly_protected_25832_revised.tif")
+N2000 <- rast("input-data/Habitat_directive_FFH_25832.tif")
+fht <- rast("input-data/forest_habitat_types_reclas_25832.tif")
+pwa_3000 <- rast("input-data/PWA_3000_NRW_25832.tif")
+state_f <- rast("input-data/State_forest_25832.tif")
 # update values in tfc feature
-tfc_feature <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/total_forest_cover_25832.tif")
+tfc_feature <- rast("input-data/total_forest_cover_25832.tif")
 
 # load in PWA vector data
 pwa_vector <-
-  read_sf("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Potential wilderness areas/PWA_1000-3000_NRW_25832.shp") %>%
+  read_sf("input-data/Potential wilderness areas/PWA_1000-3000_NRW_25832.shp") %>%
   sf::st_geometry() %>%
   c(
-    read_sf("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Potential wilderness areas/PWA_100_NRW_25832.shp") %>%
+    read_sf("input-data/Potential wilderness areas/PWA_100_NRW_25832.shp") %>%
       sf::st_geometry()
   ) %>%
   {tibble::tibble(id = seq_along(.), geom = .)} %>%
@@ -49,7 +49,7 @@ pwa_vector <-
 
 
 # loading the high vitality decreased layer
-vit_dec <- rast("C:/Users/Fabio Castelli/OneDrive - Alma Mater Studiorum Università di Bologna/Desktop/NRW_Data/Vitality Decrease/vitality_highly_decreased_25832.tif")
+vit_dec <- rast("input-data/vitality_highly_decreased_25832.tif")
 
 # setting value 0.25 for all the cells
 reclass_matrix <- matrix(c(3, 0.25), ncol = 2, byrow = TRUE)
@@ -64,7 +64,7 @@ tfc_feature <- terra::mask(
 names(tfc_feature) <- "tfc_feature"
 
 # create a binary stack for fht raster
-bstacked_fht <- binary_stack(fht) 
+bstacked_fht <- binary_stack(fht)
 
 
 # set names to keep track of all the different fht
@@ -114,62 +114,51 @@ p1_wild <-
   add_relative_targets(wild_targets) %>%
   add_locked_out_constraints(not_state_f)
 
-
 # generate solution
-## initialize with empty solution raster polygons
-s1_wild <- tfc_const_costs * 0
-s1_wild <- mask(
-  s1_wild,
+## assign ranks to each PWA
+pwa_vector$rank <- rev(seq_len(nrow(pwa_vector)))
+## create raster with ranks for each planning unit
+ranks_raster <- rasterize(
+  x = pwa_vector,
+  y = tfc_const_costs,
+  field = "rank",
+  fun = "max",
+  touches = TRUE,
+  background = 0
+)
+## update ranks with existing SPAs
+ranks_raster <- mask(
+  ranks_raster,
   existing_spa,
   maskvalue = 1,
-  updatevalue = 1
+  updatevalue = nrow(pwa_vector) + 1
 )
-for (i in seq_len(nrow(pwa_vector))) {
-  # add progress message
-  message("starting iteration", i)
-  # attempt to rasterize next PWA
-  curr_pwa <- rasterize(
-    x = vect(pwa_vector[i, ]),
-    y = tfc_const_costs,
-    field = "value",
-    touches = TRUE,
-    background = 0
-  )
-  # try adding current PWA to solution
-  curr_sol <- s1_wild + curr_pwa
-  # ensure not state forest is locked out
-  curr_sol <- mask(curr_sol, not_state_f, maskvalue = 1, updatevalue = 0)
-  # ensure existing SPA are locked out
-  curr_sol <- mask(curr_sol, existing_spa, maskvalue = 1, updatevalue = 0)
-  # calculate total extent
-  curr_area <- global(curr_sol, "sum", na.rm = TRUE)[[1]]
-  # check if total extent of solution exceeds threshold
-  if (curr_area > 90092) {
-    break
-  } else {
-    s1_wild <- curr_sol
-  }
-}
+## find grid cells indices needed to meet area threshold
+idx_data <-
+  ranks_raster %>%
+  as.data.frame(cells = TRUE, na.rm = TRUE) %>%
+  setNames(c("idx", "rank")) %>%
+  arrange(desc(rank)) %>%
+  slice_head(n = 90092)
+## create raster with solution
+s1_wild <- tfc_const_costs * 0
+s1_wild[idx_data$idx] <- 1
 
+# check that solution has the right number of planning units selected
+terra::global(s1_wild, "sum", na.rm = T)
 
-#s1_wild has 2 cells with value 2, I change them into value 1
-reclass_matrix_1b <- matrix(c(2, 1), ncol = 2, byrow = TRUE)
-s1_wild_reclass <-  classify(s1_wild, reclass_matrix_1b)
-
-
-plot(s1_wild_reclass)
+# plot solution
+plot(s1_wild)
 
 # evaluating the solution
 
-# calculate statistic 
+# calculate statistic
 # cost summary
-eval_cost_summary(p1, s1_wild_reclass)
+eval_cost_summary(p1_wild, s1_wild)
 
 # Feature representation summary
-print(eval_feature_representation_summary(p1_wild, s1_wild_reclass), n=30)
+print(eval_feature_representation_summary(p1_wild, s1_wild), n=30)
 
 # Target coverage summary
 # calculate statistics
-print(eval_target_coverage_summary(p1_wild, s1_wild_reclass), n=30)
-
-
+print(eval_target_coverage_summary(p1_wild, s1_wild), n=30)

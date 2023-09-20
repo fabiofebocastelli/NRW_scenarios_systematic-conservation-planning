@@ -4,6 +4,9 @@ library(sf)
 library(terra)
 library(raster)
 library(gurobi)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
 
 # load planning unit data
 tfc_costs <- rast("input-data/total_forest_cover_25832.tif")
@@ -115,8 +118,67 @@ p1 <- problem(tfc_const_costs, cons_feat_1) %>%
 # solving with Gurobi
 s1 <- solve(p1)
 
-# plot solution
-plot(s1)
+# make a nice plot
+## create data for plot
+d <-
+  sum(c(existing_spa, s1), na.rm = TRUE) %>%
+  mask(tfc_const_costs) %>%
+  as.data.frame(xy = TRUE) %>%
+  setNames(c("x", "y", "value")) %>%
+  mutate(
+    label = case_when(
+      value == 0 ~ "not selected",
+      value == 1 ~ "priority area",
+      value == 2 ~ "existing SPA"
+    )
+  ) %>%
+  mutate(
+    label = factor(
+      label,
+      levels = c( "not selected", "existing SPA", "priority area")
+    )
+  )
+
+## create plot
+p <-
+  ggplot() +
+  geom_tile(
+    mapping = aes(x = x, y = y, fill = label),
+    data = d,
+    height = terra::yres(existing_spa),
+    width = terra::xres(existing_spa)
+  ) +
+  coord_fixed() +
+  scale_fill_manual(
+    name = "Status",
+    values = c(
+      "not selected" = "#d9d9d9",
+      "priority area" = "#1f78b4",
+      "existing SPA" = "#b2df8a"
+    )
+  ) +
+  theme(
+    axis.ticks = ggplot2::element_blank(),
+    axis.text = ggplot2::element_blank(),
+    axis.title = ggplot2::element_blank(),
+    axis.line = ggplot2::element_blank(),
+    axis.ticks.length = ggplot2::unit(0, "null"),
+    panel.border = ggplot2::element_rect(color = "black", fill = NA),
+    panel.background = ggplot2::element_rect(fill = "white"),
+    panel.grid = ggplot2::element_blank(),
+    legend.position = c(0.99, 0.01),
+    legend.justification = c(1, 0),
+    legend.text = ggplot2::element_text(size = 7),
+    legend.box.background =
+      ggplot2::element_rect(fill = "white", color = "black"),
+    plot.margin =  ggplot2::margin(0, 0, 0, 0, "null"),
+    strip.background = ggplot2::element_rect(color = "black", fill = "black"),
+    strip.text = ggplot2::element_text(color = "white")
+  )
+
+
+# save plot
+ggsave(p, filename = "scenario1a.png", height = 4.3, width = 4.5)
 
 # calculate statistics
 ## cost summary
