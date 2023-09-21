@@ -133,6 +133,8 @@ ranks_raster <- mask(
   maskvalue = 1,
   updatevalue = nrow(pwa_vector) + 1
 )
+## mask ranks by planning unit layer
+ranks_raster <- mask(ranks_raster, tfc_const_costs)
 ## find grid cells indices needed to meet area threshold
 idx_data <-
   ranks_raster %>%
