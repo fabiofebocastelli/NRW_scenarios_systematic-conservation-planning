@@ -135,6 +135,13 @@ ranks_raster <- mask(
 )
 ## mask ranks by planning unit layer
 ranks_raster <- mask(ranks_raster, tfc_const_costs)
+## mask ranks by not state forest
+ranks_raster <- mask(
+  ranks_raster,
+  not_state_f,
+  maskvalue = 1,
+  updatevalue = NA
+)
 ## find grid cells indices needed to meet area threshold
 idx_data <-
   ranks_raster %>%
