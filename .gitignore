@@ -14,3 +14,4 @@ gurobi.log
 
 # do not ignore the following files
 !*.gitkeep
+.Rproj.user
