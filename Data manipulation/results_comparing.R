@@ -159,6 +159,67 @@ terra::global(s1_wild, "sum", na.rm = T)
 # plot solution
 plot(s1_wild)
 
+# other plot
+d1b <-
+  sum(c(existing_spa, s1_wild), na.rm = TRUE) %>%
+  mask(tfc_const_costs) %>%
+  as.data.frame(xy = TRUE) %>%
+  setNames(c("x", "y", "value")) %>%
+  mutate(
+    label = case_when(
+      value == 0 ~ "not selected",
+      value == 1 ~ "priority area",
+      value == 2 ~ "existing SPA"
+    )
+  ) %>%
+  mutate(
+    label = factor(
+      label,
+      levels = c("not selected", "existing SPA", "priority area")
+    )
+  )
+
+## create plot
+p1b <-
+  ggplot() +
+  geom_tile(
+    mapping = aes(x = x, y = y, fill = label),
+    data = d1b,
+    height = terra::yres(existing_spa),
+    width = terra::xres(existing_spa)
+  ) +
+  coord_fixed() +
+  scale_fill_manual(
+    name = "Status",
+    values = c(
+      "not selected" = "#d9d9d9",
+      "priority area" = "#4DAF4A",
+      "existing SPA" = "#FF7F00"
+    )
+  ) +
+  theme(
+    axis.ticks = element_blank(),
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.line = element_blank(),
+    axis.ticks.length = unit(0, "null"),
+    panel.border = element_rect(color = "black", fill = NA),
+    panel.background = element_rect(fill = "white"),
+    panel.grid = element_blank(),
+    legend.position = "inside", # Modifica principale qui
+    legend.position.inside = c(0.99, 0.01), # Nuovo parametro
+    legend.justification = c(1, 0),
+    legend.text = element_text(size = 7),
+    legend.box.background = element_rect(fill = "white", color = "black"),
+    plot.margin = margin(0, 0, 0, 0, "null"),
+    strip.background = element_rect(color = "black", fill = "black"),
+    strip.text = element_text(color = "white")
+  ) +
+  ggtitle("Public Commitment (1)") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+
 # evaluating the solution
 
 # calculate statistic
