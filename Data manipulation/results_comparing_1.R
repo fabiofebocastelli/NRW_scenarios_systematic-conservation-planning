@@ -1,4 +1,4 @@
-# Scenario 1
+# Scenario 1 #######################################################################################################################
 
 library(prioritizr)
 library(sf)
@@ -218,7 +218,14 @@ p1b <-
   ggtitle("Public Commitment (1)") +
   theme(plot.title = element_text(hjust = 0.5))
 
-
+# Salvataggio del raster
+terra::writeRaster(
+  s1_wild,
+  filename = "C:/NRW_figures/NRW figures/Outputs_figures/s1_wild.tif",  
+  filetype = "GTiff",
+  overwrite = TRUE,
+  datatype = "INT1U"  # Tipo dati ottimale per valori 0/1
+)
 
 # evaluating the solution
 
@@ -232,3 +239,6 @@ print(eval_feature_representation_summary(p1_wild, s1_wild), n=30)
 # Target coverage summary
 # calculate statistics
 print(eval_target_coverage_summary(p1_wild, s1_wild), n=30)
+
+
+
