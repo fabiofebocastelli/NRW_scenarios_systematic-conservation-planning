@@ -71,12 +71,33 @@ representation_analysis <- map_dfr(
 
 # 4. Visualizzazioni ------------------------------------------------------
 # Mappa di accordo
+agreement_plot <- plot(agreement_map, 
+     col = c("#D3D3D3", "#E66100", "#5D3A9B", "#40B0A6"),  # Palette accessibile
+     main = "Conservation Scenarios Overlap",
+     col.main = "black",
+     axis.args = list(cex.axis = 0.8))
+
+# save
+tiff(
+  filename = "C:/NRW_figures/NRW figures/Outputs_figures/agreement_plot.tiff",
+  width = 7,             # inches
+  height = 5,
+  units = "in",
+  res = 600,             # 600 DPI
+  compression = "lzw"    # Lossless compression
+)
+
 plot(agreement_map, 
-     col = c("grey", "yellow", "orange", "darkgreen"),
-     main = "Sovrapposizione scenari di conservazione")
+     col = c("#D3D3D3", "#E66100", "#5D3A9B", "#40B0A6"),
+     main = "Conservation Scenarios Overlap",
+     col.main = "black",
+     axis.args = list(cex.axis = 0.8))
+
+dev.off()
+
 
 # Grafico a barre rappresentazione
-ggplot(representation_analysis, 
+landcover_rep <- ggplot(representation_analysis, 
        aes(x = Scenario, y = PercentProtected, fill = ForestType)) +
   geom_col(position = "dodge") +
   scale_fill_manual(
@@ -107,4 +128,26 @@ ggplot(representation_analysis,
     plot.title = element_blank()    # Remove main title
   )
 
+# save
+
+# Prima modifica il plot aggiungendo la nuova scala di colori
+landcover_rep <- landcover_rep +
+  scale_fill_viridis_d(
+    option = "D",
+    labels = c("Damaged", "Healthy", "Wilderness"),
+    guide = guide_legend(title = NULL)
+  )
+
+# Poi salva il plot modificato
+ggsave(
+  filename = "landcover_rep.png",
+  path = "C:/NRW_figures/NRW_figures/Outputs_figures",  
+  plot = landcover_rep,
+  device = "png",
+  dpi = 600,
+  width = 210,       # 210 mm = ~8.27 inches (per units="mm")
+  height = 125,      # 125 mm = ~4.92 inches
+  units = "mm",
+  bg = "white"
+)
 
