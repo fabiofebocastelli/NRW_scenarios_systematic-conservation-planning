@@ -31,30 +31,30 @@ agreement_stats <- freq(agreement_map) %>%
 
 
 # for ownership/wilderness representation ----------------------------------
-ownerships <- c(
-  non_damaged = "path/to/non_damaged.tif", #to be calculated
-  damaged = "path/to/damaged.tif",
-  wilderness = "path/to/wilderness.tif"
+landtype <- c(
+  non_damaged = "C:/NRW_figures/NRW figures/Input_Data_figures/non_damaged_forest.tif", 
+  damaged = "D:/EFI_Data/NRW_Data/Vitality Decrease/vitality_highly_decreased_25832.tif",
+  wilderness = "C:/NRW_figures/NRW figures/Input_Data_figures/PWA_merged_NRW_25832.tif"
 ) %>% 
   map(rast) %>% 
   rast()
 
 # 3. Analisi rappresentazione categorie forestali --------------------------
 representation_analysis <- map_dfr(
-  names(scenario_rasters),
+  names(scenarios),
   function(scen){
     map_dfr(
-      names(forest_rasters),
+      names(landtype),
       function(forest_type){
         selected_area <- mask(
-          scenario_rasters[[scen]],
-          forest_rasters[[forest_type]],
+          scenarios[[scen]],
+          landtype[[forest_type]],
           maskvalue = NA
         ) %>% 
           global("sum", na.rm = TRUE) %>% 
           pull(sum)
         
-        total_area <- global(forest_rasters[[forest_type]], "sum", na.rm = TRUE) %>% 
+        total_area <- global(landtype[[forest_type]], "sum", na.rm = TRUE) %>% 
           pull(sum)
         
         tibble(
@@ -77,8 +77,34 @@ plot(agreement_map,
 
 # Grafico a barre rappresentazione
 ggplot(representation_analysis, 
-       aes(x = ForestType, y = PercentProtected, fill = Scenario)) +
+       aes(x = Scenario, y = PercentProtected, fill = ForestType)) +
   geom_col(position = "dodge") +
-  scale_fill_brewer(palette = "Set1") +
-  labs(title = "Rappresentazione categorie forestali negli scenari",
-       y = "Percentuale protetta (%)", x = "Tipo forestale")
+  scale_fill_manual(
+    values = c(
+      "damaged" = "#D55E00",        # Vermillion (colorblind-safe red)
+      "non_damaged" = "#009E73",    # Bluish green
+      "wilderness" = "#56B4E9"      # Sky blue
+    ),
+    labels = c(
+      "damaged" = "Damaged forests",
+      "non_damaged" = "Healthy forests",
+      "wilderness" = "Potential wilderness areas"
+    ),
+    guide = guide_legend()          # Remove legend title
+  ) +
+  scale_x_discrete(
+    labels = c("scen1" = "Scenario 1", 
+               "scen3" = "Scenario 3", 
+               "scen5" = "Scenario 5")
+  ) +
+  labs(
+    y = "Protected area (%)", 
+    x = ""
+  ) +
+  theme_minimal() +
+  theme(
+    legend.title = element_blank(), # Remove legend title
+    plot.title = element_blank()    # Remove main title
+  )
+
+
