@@ -10,14 +10,6 @@ scenarios <- c(
   map(rast) %>% 
   rast()
 
-# for ownership/wilderness representation ----------------------------------
-ownerships <- c(
-  non_damaged = "path/to/non_damaged.tif", #to be calculated
-  damaged = "path/to/damaged.tif",
-  wilderness = "path/to/wilderness.tif"
-) %>% 
-  map(rast) %>% 
-  rast()
 
 # 2. Analisi sovrapposizione spaziale --------------------------------------
 # Creazione mappa di accordo
@@ -36,6 +28,16 @@ agreement_stats <- freq(agreement_map) %>%
     ),
     percent = (count/sum(count))*100
   )
+
+
+# for ownership/wilderness representation ----------------------------------
+ownerships <- c(
+  non_damaged = "path/to/non_damaged.tif", #to be calculated
+  damaged = "path/to/damaged.tif",
+  wilderness = "path/to/wilderness.tif"
+) %>% 
+  map(rast) %>% 
+  rast()
 
 # 3. Analisi rappresentazione categorie forestali --------------------------
 representation_analysis <- map_dfr(
