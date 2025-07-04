@@ -154,7 +154,7 @@ p5 <-
       hjust = 0.5           # Centra il titolo
     )
   ) +
-  ggtitle("Public Commitment For Conservation (5)")
+  ggtitle("Public Commitment\nFor Conservation (5)")
   
 
 ### scenario 3
@@ -225,9 +225,24 @@ library(patchwork)
 library(showtext)
 
 #verifico di avere calibri
-font_add(family = "Calibri", regular = "Calibri.ttf") # Specifica il percorso se necessario
-showtext_auto()
+#font_add(family = "Calibri", regular = "Calibri.ttf") # Specifica il percorso se necessario
+#showtext_auto()
+#showtext_auto(FALSE)
 
+# Definisci il tema per la legenda
+custom_legend_theme <- theme(
+  legend.position = "right",
+  legend.text = element_text(size = 18),
+  legend.title = element_text(size = 20),
+  legend.key.size = unit(1, "cm")
+  
+)
+
+
+# Applica il tema della legenda a ogni plot
+p1b <- p1 + custom_legend_theme
+p3b <- p3 + custom_legend_theme
+p5b <- p5 + custom_legend_theme
 
 
 legend_plot <- ggplot() +
@@ -248,9 +263,9 @@ legend_plot <- ggplot() +
   theme_void() +
   theme(
     legend.position = "right",
-    legend.text = element_text(size = 20),    # aumenta dimensione testo legenda
-    legend.title = element_text(size = 22),   # aumenta dimensione titolo legenda
-    legend.key.size = unit(2, "cm")           # opzionale: aumenta la dimensione dei simboli
+    legend.text = element_text(size = 40),    # aumenta dimensione testo legenda
+    legend.title = element_text(size = 44),   # aumenta dimensione titolo legenda
+    legend.key.size = unit(5, "cm")           # opzionale: aumenta la dimensione dei simboli
   )
 
 
@@ -259,7 +274,7 @@ legend_plot <- ggplot() +
 legend <- cowplot::get_legend(legend_plot)
 
 # Combina i plot senza legenda e la legenda a destra
-final_plot <- (p1 + p3 + p5) + patchwork::plot_layout(ncol = 3, guides = "collect") & theme(legend.position = "right")
+final_plot <- (p1b + p3b + p5b) + patchwork::plot_layout(ncol = 3, guides = "collect") & theme(legend.position = "right")
 
 # Visualizza il risultato
 print(final_plot)
