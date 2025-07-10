@@ -90,10 +90,18 @@ p1 <- p1 + theme(
   panel.grid.minor.x = element_blank()
 )
 
-# Seconda serie di barplot
+
+# Seconda serie di barplot (risolvendo commento di Trishna)
 p2 <- ggplot(data2, aes(x = metric, y = value, fill = metric)) +
   geom_bar(stat = "identity", width = 0.7) +
-  scale_fill_brewer(palette = "Set2") +
+  scale_fill_manual(
+    values = c(
+      "Aggregation Index" = "#0072B2",        # blu intenso
+      "Clumpiness Index" = "#56B4E9",        # azzurro
+      "Forest habitats" = "#E69F00", # arancione
+      "Natura 2000" = "#F0E442"  # giallo
+    )
+  ) +
   facet_grid(~ scenario, scales = "free_x", space = "free_x") +
   labs(title = "Compactness vs Representativeness", x = NULL, y = "Percentage") +
   common_theme() +
@@ -125,11 +133,15 @@ p3 <- p3 + theme(
 
 
 # Combinare i plot verticalmente con più spazio tra loro
-final_plot <- p1 / plot_spacer() / p2 / plot_spacer() / p3 +
-  plot_layout(heights = c(1.2, 0.1, 1, 0.1, 1))
+#final_plot <- p1 / plot_spacer() / p2 / plot_spacer() / p3 +
+# plot_layout(heights = c(1.2, 0.1, 1, 0.1, 1))
+
+# metto solo p1 e p2 uno sopra l'altro come da commento di Francesco
+final_plot <- p1 / plot_spacer() / p2 + 
+  plot_layout(heights = c(1.2, 0.1, 1))
 
 # Visualizzare il plot
 print(final_plot)
 
 # Salvare il plot come immagine ad alta risoluzione
-ggsave("figure4.png", final_plot, width = 12, height = 18, dpi = 1000)
+ggsave("figure2.png", final_plot, width = 12, height = 18, dpi = 1000)
