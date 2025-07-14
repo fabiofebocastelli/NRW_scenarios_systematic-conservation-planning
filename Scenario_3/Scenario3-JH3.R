@@ -15,17 +15,17 @@ library(Matrix)
 
 
 # load planning unit data
-tfc_costs <- rast("input-data/total_forest_cover_25832.tif")
+tfc_costs <- rast("D:/EFI_Data/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/total_forest_cover_25832.tif")
 
 # creating a new raster with constant costs
 tfc_const_costs <- (tfc_costs*0) + 1
 
 # loading conservation features
-existing_spa <- rast("input-data/Forest_strictly_protected_25832_revised.tif")
-N2000 <- rast("input-data/Habitat_directive_FFH_25832.tif")
-fht <- rast("input-data/forest_habitat_types_reclas_25832.tif")
-state_f <- rast("input-data/State_forest_25832.tif")
-eligible_f <- rast("input-data/Eligible_forest-Federal_forest_25832.tif")
+existing_spa <- rast("D:/EFI_Data/NRW_Data/Forest strictly protected/Forest_strictly_protected_25832_revised.tif")
+N2000 <- rast("D:/EFI_Data/NRW_Data/Occurrence of FFH habitat types in North Rhine-Westphalia/Habitat_directive_FFH_25832.tif")
+fht <- rast("D:/EFI_Data/NRW_Data/Habitat_types_AnnexI/Dataset_from_Lanuv/forest_habitat_types_reclas_25832.tif")
+state_f <- rast("D:/EFI_Data/NRW_Data/Public forest/State_forest_25832.tif")
+eligible_f <- rast("D:/EFI_Data/NRW_Data/Eligible Forest + federal forest/Eligible_forest-Federal_forest_25832.tif")
 
 # create a binary stack for fht raster
 bstacked_fht <- binary_stack(fht)
@@ -43,7 +43,7 @@ bstacked_fht <-
 # set aside 5% of their holdings to get the incentives
 
 # loading the high vitality decreased layer
-vit_dec <- rast("input-data/vitality_highly_decreased_25832.tif")
+vit_dec <- rast("D:/EFI_Data/NRW_Data/Vitality Decrease/vitality_highly_decreased_25832.tif")
 
 # setting value 1 for all the cells
 vit_dec <- (vit_dec * 0) + 1
@@ -64,7 +64,7 @@ modified_eligible_f <-terra::mask(
 )
 
 # create  tfc feature to specify a value of each and every forest
-tfc_feature <- rast("input-data/total_forest_cover_25832.tif")
+tfc_feature <- rast("D:/EFI_Data/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/total_forest_cover_25832.tif")
 tfc_feature <- terra::mask(
   tfc_feature * 0.25,
   mask = (tfc_feature > 0.2) & (vit_dec > 0.5),
@@ -168,6 +168,14 @@ s3 <- tfc_const_costs * 0
 s3[p3$planning_unit_indices()] <-
   s3_raw[[1]]$x[seq_len(p3$number_of_planning_units())]
 s3[is.na(tfc_const_costs)] <- NA_real_
+
+
+# Imposta il percorso completo del file .tif
+path <- "C:/NRW_figures/NRW figures/Outputs_figures/s3.tif"
+
+writeRaster(s3, path, overwrite=TRUE)
+
+
 
 # evaluating the solution
 # calculate statistic
