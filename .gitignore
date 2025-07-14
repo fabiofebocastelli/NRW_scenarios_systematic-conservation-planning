@@ -1,5 +1,13 @@
 # ignore large data files
 input-data/*.tif
+input-data/*/*.tif
+input-data/*/*.shp
+input-data/*/*.dbf
+input-data/*/*.sbx
+input-data/*/*.sbn
+input-data/*/*.shx
+input-data/*/*.cpg
+input-data/*/*.prj
 
 # R profile files
 *.Rproj.user
