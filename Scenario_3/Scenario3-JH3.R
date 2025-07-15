@@ -183,8 +183,17 @@ writeRaster(s3, path, overwrite=TRUE)
 eval_cost_summary(p3, s3)
 
 # Feature representation summary
-print(eval_feature_representation_summary(p3, s3), n=30)
+rap_summ <- print(eval_feature_representation_summary(p3, s3), n=30)
 
 # Target coverage summary
 # calculate statistics
-print(eval_target_coverage_summary(p3, s3), n=30)
+cov_summ <- print(eval_target_coverage_summary(p3, s3), n=30)
+
+
+library(landscapemetrics)
+
+landscapemetrics::lsm_l_ai(s3)
+
+lsm_c_clumpy(s3)
+
+
