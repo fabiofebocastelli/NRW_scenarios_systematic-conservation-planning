@@ -70,30 +70,68 @@ representation_analysis <- map_dfr(
 )
 
 # 4. Visualizzazioni ------------------------------------------------------
-# Mappa di accordo
-agreement_plot <- plot(agreement_map, 
-     col = c("#D3D3D3", "#E66100", "#5D3A9B", "#40B0A6"),  # Palette accessibile
-     main = "Conservation Scenarios Overlap",
-     col.main = "black",
-     axis.args = list(cex.axis = 0.8))
+library(viridis)
+library(scales)
+library(terra)
+library(prettymapr)
 
-# save
-tiff(
-  filename = "C:/NRW_figures/NRW figures/Outputs_figures/agreement_plot.tiff",
-  width = 7,             # inches
-  height = 5,
-  units = "in",
-  res = 600,             # 600 DPI
-  compression = "lzw"    # Lossless compression
+
+# Mappa di accordo
+mako_cols <- c("#D3D3D3", viridis::mako(3))
+
+png("C:/NRW_figures/NRW figures/Outputs_figures/agreement_map_grad.png", width = 8000, height = 5000, res = 800)
+
+
+agreement_plot <- plot(
+  agreement_map, 
+  col = c("#D3D3D3", "#6500A7FF", "#EB7654FF", "#F2F127FF"),
+  main = "Conservation Scenarios Overlap",
+  col.main = "black",
+  axis.args = list(cex.axis = 0.8)
 )
 
-plot(agreement_map, 
-     col = c("#D3D3D3", "#E66100", "#5D3A9B", "#40B0A6"),
-     main = "Conservation Scenarios Overlap",
-     col.main = "black",
-     axis.args = list(cex.axis = 0.8))
+# Calcoli automatici per una scala bar ragionevole
+ext <- ext(agreement_map)
+xrange <- ext[2] - ext[1]
+yrange <- ext[4] - ext[3]
+preferred_length <- xrange * 0.1
+nice_length <- round(preferred_length / 500) * 500
+
+# Barra in basso a destra
+# labels: solo due valori (0 e nice_length in km), nessun valore al centro
+labels_km <- c(0, NA, nice_length / 1000)
+
+# Scegli adj: con adj = c(0.5, 2.6) la scritta "km" è molto vicina sotto la barra,
+# e con "halo=TRUE" i numeri rimangono leggibili (prova anche c(0.5,2.7) se vuoi attaccarla ancora di più)
+sbar(
+  d = nice_length,
+  xy = "bottomright",
+  type = "bar",
+  divs = 2,
+  labels = labels_km,
+  cex = 1,
+  below = "km",
+  adj = c(0.5, 1.2),
+  col = "black",
+  lwd = 2,
+  halo = TRUE
+)
+
+# Ora posiziona la freccia nord sopra la barra: 
+# prendi la posizione Y della barra (stessa di "bottomright") e aggiungi un piccolo margine in altezza,
+# e centra sul lato destro come la barra stessa
+x_north <- ext[2] - 0.105 * xrange  # centrato rispetto alla barra: regola 0.18 se la lunghezza cambia molto
+y_north <- ext[3] + 0.15 * yrange # poco sopra la barra: regola 0.15 se serve
+
+north(
+  xy = c(x_north, y_north),
+  type = 2,
+  cex = 1.2,
+  label = ""
+)
 
 dev.off()
+
 
 
 # Grafico a barre rappresentazione
