@@ -17,7 +17,7 @@ library(gridExtra)
 #importo i dati che mi servono
 
 existing_spa <-  rast("C:/NRW_figures/NRW figures/Input_Data_figures/Forest_strictly_protected_25832_revised.tif")
-plot_exspa <- plot(existing_spa)
+# plot_exspa <- plot(existing_spa)
 
 s1 <- rast("C:/NRW_figures/NRW figures/Outputs_figures/s1_wild.tif")
 
@@ -175,3 +175,10 @@ final_plot
 
 # save plot
 ggsave(final_plot, filename = "C:/NRW_figures/NRW figures/Outputs_figures/fig4.png", height = 5.2, width = 15, dpi=1000)
+
+
+
+#### code for zoomming
+# senza successo, mi sposto in inkscape
+
+
