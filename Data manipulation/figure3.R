@@ -171,10 +171,12 @@ ggsave("C:/NRW_figures/NRW figures/Outputs_figures/figure2b_new.png", p2b, width
 ### making a separate figure for Figure 2c called Figure 5 ###
 
 
-# Dati per la terza serie
-features <- c("91D0", "91E0", "91E0; NAX0", "91E0; NAC0", "91F0", "NA00", "NAB0", "NAC0", "NAC0; NAX0", "NAD0", 
-              "NAV0", "NAW0", "9110", "9110; 91E0", "9130", "9150", "9160", "9170", "9180", "9190", 
-              "NAX0", "NAX0; NAY0", "NAY0", "91D1", "NAK0", "Natura 2000")
+# Dati di input per terza serie 
+features <- c(
+  "91D0", "91E0", "91E0; NAX0", "91E0; NAC0", "91F0", "NA00", "NAB0", "NAC0", "NAC0; NAX0", "NAD0",
+  "NAV0", "NAW0", "9110", "9110; 91E0", "9130", "9150", "9160", "9170", "9180", "9190",
+  "NAX0", "NAX0; NAY0", "NAY0", "91D1", "NAK0", "Natura 2000"
+)
 
 values_scenario1 <- c(13, 11, 0, 0, 8, 14, 13, 4, 5, 38, 7, 12, 29, 0, 25, 4, 18, 20, 19, 15, 3, 0, 29, 0, 50, 20)
 values_scenario3 <- c(33, 36, 33, 38, 38, 41, 41, 32, 37, 66, 32, 42, 50, 41, 45, 33, 44, 51, 45, 45, 31, 100, 57, 40, 20, 43)
@@ -183,33 +185,10 @@ values_scenario5 <- c(26, 22, 0, 5, 33, 29, 19, 15, 68, 44, 25, 13, 47, 91, 33, 
 data3 <- data.frame(
   scenario = rep(paste("Scenario", c(1, 3, 5)), each = 26),
   category = rep(features, 3),
-  value = c(values_scenario1, values_scenario3, values_scenario5) / 100  # Convertito in decimali
+  value = c(values_scenario1, values_scenario3, values_scenario5) / 100 # Convertito in decimali
 )
 
-# Impostare l'ordine corretto per le categorie
-data3$category <- factor(data3$category, levels = features)
-
-# Terza serie di barplot
-p3 <- ggplot(data3, aes(x = category, y = value, fill = factor(scenario))) +
-  geom_bar(stat = "identity", width = 0.8) +
-  scale_fill_brewer(palette = "Dark2") +
-  facet_grid(~ scenario, scales = "free_x", space = "free_x") +
-  geom_hline(yintercept = 0.3, color = "black", linetype = "solid", size = 0.5) +
-  labs(title = "Priority Areas Coverage of Ecologically Valuable Areas", x = "") +
-  common_theme() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 6),
-    axis.text.x.bottom = element_text(size = 6, hjust = 1, angle = 45)  # Aggiungi questa riga
-  ) +
-  scale_y_continuous(limits = c(0, 1), labels = scales::percent)
-
-p3 <- p3 + theme(
-  panel.grid.major.x = element_blank(),
-  panel.grid.minor.x = element_blank()
-)
-
-# codice per seguire consiglio francesco
-
+# Nomi estesi per habitat (nell'ordine originale di features)
 feature_names <- c(
   "Bog woodland",
   "Alluvial forests with Alnus glutinosa & Fraxinus excelsior",
@@ -235,51 +214,68 @@ feature_names <- c(
   "Floodplain + Ravine forests",
   "Ravine & scree slope forests, rocky forests",
   "Birch peat swamp forest",
-  "Unknown habitat",
+  "Endangered non-dune conifers",
   "Natura 2000"
 )
 
-# Sostituisci i livelli della variabile category con i nomi completi
-
+# Imposta i nomi label corretti per i codici habitat
 data3$category <- factor(data3$category, levels = features, labels = feature_names)
 
+# Ordinamento per avere l'ordine alfabetico dalla A in alto verso la Z/Natura 2000 in basso
+habitats_sorted <- sort(feature_names[feature_names != "Natura 2000"])
+habitats_sorted <- c(habitats_sorted, "Natura 2000")
+spaces <- paste0("space", seq_along(habitats_sorted) - 1)
 
-### tentativo di allargar elo spazio tra i blocchi di barre
-
-# Supponiamo che tu abbia già:
-# - feature_names: vettore con i nomi degli habitat (estesi)
-# - data3: il dataframe originale con scenario, category (codice habitat), value
-
-library(cowplot)
-
-
-# 1. Crea una lista alternata tra habitat e spazi unici
-feature_names_spaced <- as.vector(rbind(
-  feature_names,
-  paste0("space", seq_along(feature_names))
+feature_names_spaced_alphabetical <- as.vector(rbind(
+  habitats_sorted,
+  c(spaces, rep(NA, length(habitats_sorted) - length(spaces)))
 ))
-feature_names_spaced <- feature_names_spaced[-length(feature_names_spaced)] # rimuovi ultimo spazio extra
+feature_names_spaced_alphabetical <- feature_names_spaced_alphabetical[!is.na(feature_names_spaced_alphabetical)]
 
-# 2. Crea righe vuote per ogni scenario e ogni spazio
+
+# Crea righe vuote per gli "spazi" per ogni scenario
 empty_rows <- expand.grid(
   scenario = unique(data3$scenario),
-  category = feature_names_spaced[grepl("^space", feature_names_spaced)],
+  category = feature_names_spaced_alphabetical[grepl("^space", feature_names_spaced_alphabetical)],
   value = 0
 )
 
-# 3. Unisci ai dati originali
+# Unisci dati veri e spazi vuoti
 data3_spaced <- rbind(data3, empty_rows)
-
-# 4. Aggiorna i livelli del fattore category
-data3_spaced$category <- factor(data3_spaced$category, levels = feature_names_spaced)
-
-# 5. Crea il grafico
+data3_spaced$category <- factor(
+  data3_spaced$category,
+  levels = rev(feature_names_spaced_alphabetical)
+)
 data3_spaced$scenario <- factor(data3_spaced$scenario)
 
+# Tema personalizzato
+common_theme <- function(
+    title_size = 17,
+    axis_text_size = 11,
+    axis_text_x_size = 10,
+    legend_title_size = 14,
+    legend_text_size = 12) {
+  theme_minimal() +
+    theme(
+      legend.position = "none",
+      axis.text.x = element_text(angle = 45, hjust = 1, size = axis_text_x_size),
+      axis.text.y = element_text(size = axis_text_size, margin = margin(r = 0)),
+      strip.text = element_text(size = 13, face = "plain"),
+      plot.title = element_text(
+        hjust = 0.5, face = "bold",
+        margin = margin(b = 20), size = title_size
+      ),
+      axis.title.y = element_blank()
+    )
+}
+
+# Plot principale
 p3_spaced <- ggplot(data3_spaced, aes(x = category, y = value, fill = scenario)) +
-  geom_bar(stat = "identity",
-           position = position_dodge2(width = 0.8, preserve = "single"),
-           width = 1, show.legend = FALSE) +
+  geom_bar(
+    stat = "identity",
+    position = position_dodge2(width = 0.8, preserve = "single"),
+    width = 1, show.legend = FALSE
+  ) +
   scale_fill_brewer(palette = "Dark2", name = "Scenario") +
   geom_hline(yintercept = 0.3, color = "black", linetype = "solid", size = 0.5) +
   labs(
@@ -287,37 +283,43 @@ p3_spaced <- ggplot(data3_spaced, aes(x = category, y = value, fill = scenario))
     x = NULL,
     y = "Proportion"
   ) +
-  common_theme() +
+  common_theme(
+    title_size = 17,
+    axis_text_size = 11,
+    axis_text_x_size = 10,
+    legend_title_size = 14,
+    legend_text_size = 12
+  ) +
   coord_flip() +
   theme(
     panel.grid.major.y = element_blank(),
     panel.grid.minor.y = element_blank(),
-    plot.title = element_text(size = 17),
-    axis.text.y = element_text(size = 11, margin = margin(r = 0)),
-    axis.text.x = element_text(size = 10),
-    legend.title = element_text(size = 14),
-    legend.text = element_text(size = 12),
     axis.ticks.y = element_blank()
   ) +
   scale_y_continuous(limits = c(0, 1), labels = scales::percent) +
   scale_x_discrete(labels = function(x) ifelse(grepl("^space", x), "", x))
 
 # Plot dummy SOLO per la legenda
-p_legend <- ggplot(subset(data3_spaced, !grepl("^space", category)),
-                   aes(x = category, y = value, fill = scenario)) +
-  geom_bar(stat = "identity",
-           position = position_dodge(width = 0.8),
-           width = 0.7) +
+p_legend <- ggplot(
+  subset(data3_spaced, !grepl("^space", category)),
+  aes(x = category, y = value, fill = scenario)
+) +
+  geom_bar(
+    stat = "identity",
+    position = position_dodge(width = 0.8),
+    width = 0.7
+  ) +
   scale_fill_brewer(palette = "Dark2", name = "") +
   theme_void() +
-  theme(legend.position = "right",
-        legend.title = element_text(size = 18),  # titolo legenda più grande
-        legend.text = element_text(size = 16)    # testo legenda più grande
+  theme(
+    legend.position = "right",
+    legend.title = element_text(size = 18),
+    legend.text = element_text(size = 16)
   )
-
 
 legend <- get_legend(p_legend)
 
+# Plot finale con legenda a fianco
 p3_spaced_final <- plot_grid(
   p3_spaced + theme(legend.position = "none"),
   legend,
@@ -325,10 +327,11 @@ p3_spaced_final <- plot_grid(
   nrow = 1
 )
 
-# Visualizza il grafico
+# Visualizza
 print(p3_spaced_final)
 
-ggsave("C:/NRW_figures/NRW figures/Outputs_figures/figure3_standalone.png", p3_spaced_final, width = 10, height = 12, dpi = 600, bg = "white")
+
+ggsave("C:/NRW_figures/NRW figures/Outputs_figures/figure3_standalone2.png", p3_spaced_final, width = 10, height = 12, dpi = 600, bg = "white")
 
 
 
