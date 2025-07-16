@@ -44,24 +44,37 @@ data2 <- data.frame(
 data2$metric <- factor(data2$metric, levels = c("Aggregation Index", "Clumpiness Index", "Forest habitats", "Natura 2000"))
 
 
-# Funzione per il tema comune
-common_theme <- function() {
+
+
+#formattazione tema comune
+common_theme <- function(
+    title_size = 22,           # esempio: 16 per il titolo
+    axis_text_size = 18,       # esempio: 12 per i tick degli assi
+    facet_size = 18            # esempio: 13 per il facet label
+) {
   theme_minimal() +
     theme(
       legend.position = "none",
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      strip.text = element_text(size = 12, face = "plain"),
-      plot.title = element_text(hjust = 0.5, face = "bold", margin = margin(b = 20)),
+      axis.text.x = element_text(angle = 45, hjust = 1, size = axis_text_size),
+      axis.text.y = element_text(size = axis_text_size),    # aggiungi questa linea per asse y
+      strip.text = element_text(size = facet_size, face = "plain"),
+      plot.title = element_text(
+        hjust = 0.5,
+        face = "bold",
+        margin = margin(b = 20),
+        size = title_size
+      ),
       axis.title.y = element_blank()
     )
 }
+
 
 # Prima serie di barplot
 p1 <- ggplot(data1, aes(x = ownership, y = value, fill = type)) +
   geom_bar(stat = "identity", position = "dodge", width = 0.7) +
   scale_fill_manual(values = c("Initial" = "black", "New" = "grey70")) +
   facet_grid(~ scenario, scales = "free_x", space = "free_x") +
-  labs(title = "Forest Owners Involvement", x = NULL) +
+  labs(title = "(a) Forest Owners Involvement", x = NULL) +
   common_theme() +
   scale_y_continuous(limits = c(0, 1), labels = scales::percent)
 
@@ -84,7 +97,7 @@ p2 <- ggplot(data2, aes(x = metric, y = value, fill = metric)) +
     )
   ) +
   facet_grid(~ scenario, scales = "free_x", space = "free_x") +
-  labs(title = "Compactness vs Representativeness", x = NULL, y = "Percentage") +
+  labs(title = "(b) Compactness vs Representativeness", x = NULL, y = "Percentage") +
   common_theme() +
   scale_y_continuous(limits = c(0, 1), labels = scales::percent)
 
@@ -94,7 +107,23 @@ p2 <- p2 + theme(
 )
 
 
-# nuova Figure 2b su consiglio di Francesco
+# Combinare i plot verticalmente con più spazio tra loro
+#final_plot <- p1 / plot_spacer() / p2 / plot_spacer() / p3 +
+# plot_layout(heights = c(1.2, 0.1, 1, 0.1, 1))
+
+# metto solo p1 e p2 uno sopra l'altro come da commento di Francesco
+final_plot <- p1 / plot_spacer() / p2 + 
+  plot_layout(heights = c(1.2, 0.1, 1))
+
+# Visualizzare il plot
+print(final_plot)
+
+# Salvare il plot come immagine ad alta risoluzione
+ggsave("C:/NRW_figures/NRW figures/Data manipulation/fig3.png", final_plot, width = 12, height = 18, dpi = 1000)
+
+
+
+### nuova Figure 2b su consiglio di Francesco
 
 # Imposta scenario come fattore per mantenere l'ordine
 data2$scenario <- factor(data2$scenario, levels = c("Scenario 1", "Scenario 3", "Scenario 5"))
@@ -133,21 +162,7 @@ p2b
 
 ggsave("C:/NRW_figures/NRW figures/Outputs_figures/figure2b_new.png", p2b, width = 18, height = 15, dpi = 600, bg = "white")
 
-
-
-# Combinare i plot verticalmente con più spazio tra loro
-#final_plot <- p1 / plot_spacer() / p2 / plot_spacer() / p3 +
-# plot_layout(heights = c(1.2, 0.1, 1, 0.1, 1))
-
-# metto solo p1 e p2 uno sopra l'altro come da commento di Francesco
-final_plot <- p1 / plot_spacer() / p2 + 
-  plot_layout(heights = c(1.2, 0.1, 1))
-
-# Visualizzare il plot
-print(final_plot)
-
-# Salvare il plot come immagine ad alta risoluzione
-ggsave("figure2.png", final_plot, width = 12, height = 18, dpi = 1000)
+###########################################################################################################################
 
 
 
