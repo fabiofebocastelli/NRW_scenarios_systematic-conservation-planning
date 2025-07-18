@@ -223,8 +223,8 @@ feature_names <- c(
 data3$category <- factor(data3$category, levels = features, labels = feature_names)
 
 # Ordinamento per avere l'ordine alfabetico dalla A in alto verso la Z/Natura 2000 in basso
-habitats_sorted <- sort(feature_names[feature_names != "Natura 2000"])
-habitats_sorted <- c(habitats_sorted, "Natura 2000")
+habitats_sorted <- sort(feature_names[feature_names != "Natura 2000 (184477)"])
+habitats_sorted <- c(habitats_sorted, "Natura 2000 (184477)")
 spaces <- paste0("space", seq_along(habitats_sorted) - 1)
 
 feature_names_spaced_alphabetical <- as.vector(rbind(
