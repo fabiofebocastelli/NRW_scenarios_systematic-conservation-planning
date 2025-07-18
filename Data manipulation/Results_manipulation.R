@@ -245,4 +245,52 @@ joint_plot <- grid.arrange(p1b, p3, p1a, ncol = 3)
 
 # save plot
 ggsave(joint_plot, filename = "joint_plot.png", height = 5.2, width = 15, dpi=1000)
+
+
+
+
+#### mean patch size #################################################
+library(terra)
+library(landscapemetrics)
+
+s1 <- rast("C:/NRW_figures/NRW figures/Outputs_figures/s1_wild.tif")
+
+s3 <- rast("C:/NRW_figures/NRW figures/Outputs_figures/s3.tif")
+
+s5 <- rast("C:/NRW_figures/NRW figures/Outputs_figures/s5.tif")
+
+
+## scenario 1
+#check values
+unique(values(s1))
+
+# Calcola per tutte le classi
+res1 <- lsm_c_area_mn(s1)
+
+# Mostra solo la mean patch area per classe 1
+mparea_class1 <- res1[res1$class == 1, ]
+print(mparea_class1)
+
+## scenario 3
+#check values
+unique(values(s3))
+
+# Calcola per tutte le classi
+res3 <- lsm_c_area_mn(s3)
+
+# Mostra solo la mean patch area per classe 1
+mparea_class3 <- res3[res3$class == 1, ]
+print(mparea_class3)
+
+## scenario 5
+#check values
+unique(values(s5))
+
+# Calcola per tutte le classi
+res5 <- lsm_c_area_mn(s5)
+
+# Mostra solo la mean patch area per classe 1
+mparea_class5 <- res5[res5$class == 1, ]
+print(mparea_class5)
+
   
