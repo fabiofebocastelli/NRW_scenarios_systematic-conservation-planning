@@ -2,6 +2,7 @@
 library(ggplot2)  
 library(patchwork)
 library(RColorBrewer)
+library(cowplot)
 
 # Dati per la prima serie
 data1 <- data.frame(
@@ -331,7 +332,7 @@ p3_spaced_final <- plot_grid(
 print(p3_spaced_final)
 
 
-ggsave("C:/NRW_figures/NRW figures/Outputs_figures/figure3_standalone2.png", p3_spaced_final, width = 10, height = 12, dpi = 600, bg = "white")
+ggsave("C:/NRW_figures/NRW figures/Outputs_figures/figure5.png", p3_spaced_final, width = 10, height = 12, dpi = 600, bg = "white")
 
 
 
