@@ -188,7 +188,7 @@ data3 <- data.frame(
   value = c(values_scenario1, values_scenario3, values_scenario5) / 100 # Convertito in decimali
 )
 
-# Nomi estesi per habitat (nell'ordine originale di features)
+# Nomi estesi per habitat (nell'ordine originale di features) # tra parentesi gli ettari di partenza in NRW
 feature_names <- c(
   "Bog woodland (512)",
   "Alluvial forests with Alnus glutinosa & Fraxinus excelsior (3478)",
