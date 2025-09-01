@@ -26,15 +26,15 @@ lsm_c_clumpy(s3)
 
 # evaluating feature representation/eval_target_coverage_summary
 
-# scenario 1a
-stats_1a <- print(eval_target_coverage_summary(p1, s1), n=30)
-
 
 # scenario 1b
 stats_1b <- print(eval_target_coverage_summary(p1_wild, s1_wild), n=30)
 
 # scenario 3
 stats_3 <- print(eval_target_coverage_summary(p3, s3), n=30)
+
+# scenario 5
+stats_1a <- print(eval_target_coverage_summary(p5, s5), n=30)
 
 
 #exporting tables
@@ -48,13 +48,13 @@ write.table(stats_3, file = "C:/Users/Fabio Castelli/OneDrive - Alma Mater Studi
 
 # nice graphs
 
-# scenario 1a 
+# scenario 5 
 
 # make a nice plot
 ## create data for plot
 library(ggplot2)
 
-d1a <-
+d5 <-
   sum(c(existing_spa, s1), na.rm = TRUE) %>%
   mask(tfc_const_costs) %>%
   as.data.frame(xy = TRUE) %>%
@@ -74,11 +74,11 @@ d1a <-
   )
 
 ## create plot
-p1a <-
+p5 <-
   ggplot() +
   geom_tile(
     mapping = aes(x = x, y = y, fill = label),
-    data = d1a,
+    data = d5,
     height = terra::yres(existing_spa),
     width = terra::xres(existing_spa)
   ) +
