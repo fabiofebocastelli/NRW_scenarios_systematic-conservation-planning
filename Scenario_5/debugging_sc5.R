@@ -311,17 +311,21 @@ mparea_class5 <- res5[res5$class == 1, ]
 print(mparea_class5) # mps  62.1
 
 # aggregation index
+landscapemetrics::lsm_l_ai(s5) # 84.9
+
+
 
 
 # clumpiness index
-
+lsm_c_clumpy(s5) # 0.831
 
 # representativeness
 
+print(eval_target_coverage_summary(p5, s5), n=30)
 
 
 
-
+## unisci la soluzione s5 a spa_notstate forest e poi calcola i valori dei risultati 
 
 
 
