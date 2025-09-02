@@ -9,7 +9,7 @@ library(ggplot2)
 library(gridExtra)
 
 # load planning unit data
-tfc_costs <- rast("D:/EFI_Data/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/total_forest_cover_25832.tif")
+tfc_costs <- rast("D:/EFI_Data/NRW_Data/u2018_clc2018_v2020_20u1_geoPackage/forest_cover_NRW_25832_0209.tif")
 
 # creating a new raster with constant costs
 tfc_const_costs <- (tfc_costs * 0) + 1
@@ -120,19 +120,31 @@ p5 <- problem(tfc_const_costs, cons_feat_1) %>%
   add_gurobi_solver(gap = 0)
 
 # solving with Gurobi
-s5 <- solve(p5)
+s5 <- solve(p5) 
+
+# count number of cells in s5 with value 1 (should be 72282)
+vals_s5 <- values(s5)
+sum(vals_s5 == 1, na.rm = TRUE) # ok
+
+
+# Check locked-in (existing_spa) and locked-out (not_state_f_new) constraints
+
+vals_locked_in <- values(existing_spa)
+all_selected <- all(vals_s5[which(vals_locked_in == 1)] == 1, na.rm = TRUE)
+
+# Locked-out check
+vals_locked_out <- values(not_state_f_new)
+none_selected <- all(vals_s5[which(vals_locked_out == 1)] != 1, na.rm = TRUE)
+
+print(all_selected)    # TRUE if all locked-in are selected. It is false and it is correct because existing protected areas not state forest shouldn not be included
+print(none_selected)   # TRUE if all locked-out are excluded. it is true and it is correct because all not state forest are excluded
 
 
 
-# calcola i valori unici delle celle di s1
-unique_values <- unique(values(s5))
-print(unique_values)
-# quante celle con valore 1 in s1
-num_cells_selected <- sum(values(s5) == 1, na.rm = TRUE)
-print(num_cells_selected)
 
 
-# make a nice plot
+
+# make a nice plot---------------------------------------------------------------------------------
 ## create data for plot
 # Convert rasters to data frames with coordinates
 existing_spa_df <- existing_spa %>%
@@ -266,6 +278,9 @@ p1
 # save plot
 ggsave(p, filename = "scenario1a.png", height = 4.3, width = 4.5)
 
+----------------------------------------------------------------------------------------------------------
+
+
 # calculate statistics
 ## cost summary
 eval_cost_summary(p5, s5)
@@ -297,7 +312,103 @@ eval_target_coverage_summary(p5, s5)
 
 
 
-# debugging
+# combining s5 with spa_not_stforest and then calculating results -------------------------------------------------
+
+# loading spa_not_stforest
+spa_not_stforest <- rast("D:/EFI_Data/NRW_Data/Forest strictly protected/spa_not_stateforests_0209.tif")
+
+# try to fix spa_not_stforest changin Nan to Na
+
+v <- vect("D:/EFI_Data/NRW_Data/Forest strictly protected/spa_not_stateforests.gpkg")
+
+# Crea un raster vuoto con le stesse proprietà di s5
+r_template <- rast(
+  extent = ext(s5),
+  resolution = c(100, 100),
+  crs = crs(s5)
+)
+
+# Rasterizza: celle dentro il poligono = 1, altre = NA
+spa_not_stateforests_new <- rasterize(v, r_template, field = NULL, fun = "max", background = NA)
+
+# Forza le celle rasterizzate a 1
+spa_not_stateforests_new[!is.na(spa_not_stateforests_new)] <- 1
+
+
+# Salva
+writeRaster(spa_not_stateforests_new, "raster_1_NA.tif", overwrite = TRUE)
+
+
+
+
+
+
+
+
+
+# check is crs, extent and resolution are the same btw the two rasters
+crs(s5) == crs(spa_not_stforest) # TRUE
+
+ext(s5)== ext(spa_not_stforest) # true
+
+res(s5) == res(spa_not_stforest) # TRUE
+
+# check for rasters dimensions
+dim(s5) == dim(spa_not_stforest) # true
+
+# are they overlapping?
+# Celle che hanno valore in entrambi i raster
+overlap_mask <- !is.na(s5) & !is.na(spa_not_stforest)
+
+# Conta quante celle si sovrappongono
+n_overlap <- global(overlap_mask, "sum", na.rm = TRUE)
+print(n_overlap)
+
+# cambio s5 da valori 0e 1 a NA e 1
+s5_only1 <- classify(s5, rcl = matrix(c(0, NA), ncol = 2, byrow = TRUE))
+
+
+# combine 2 rasters
+# fun = "mean" -> media dei valori dove si sovrappongono
+# puoi usare anche "min", "max", "sum" ecc.
+scenario5 <- ifel((s5 == 1) | (spa_not_stforest == 1), 1, NA)
+
+# Numero di celle complessive con valore == 1
+n_cells_1 <- global(scenario5 == 1, "sum", na.rm = TRUE)
+print(n_cells_1) # 90076 ok!
+
+# plot
+scenario5 <- subset(scenario5, 1)
+
+df <- as.data.frame(scenario5, xy = TRUE)
+names(df)
+colnames(df)[3] <- "value"
+
+
+# Plot ggplot
+ggplot(df, aes(x = x, y = y, fill = factor(value))) +
+  geom_raster() +
+  scale_fill_manual(values = c("1" = "darkgreen", "NA" = "lightgrey"),
+                    na.value = "lightgrey",  # sicurezza per NA
+                    labels = c("Presence", "NoData"),
+                    na.translate = TRUE) +
+  coord_equal() +
+  theme_minimal() +
+  labs(fill = "Scenario5") +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank())
+
+
+
+
+
+# calcolo la performance di questa nuova soluzione
+
+# representativeness
+print(eval_target_coverage_summary(p5, scenario5), n=30)
+
+
 
 library(landscapemetrics)
 #check values
@@ -314,18 +425,13 @@ print(mparea_class5) # mps  62.1
 landscapemetrics::lsm_l_ai(s5) # 84.9
 
 
-
-
 # clumpiness index
 lsm_c_clumpy(s5) # 0.831
 
-# representativeness
-
-print(eval_target_coverage_summary(p5, s5), n=30)
 
 
 
-## unisci la soluzione s5 a spa_notstate forest e poi calcola i valori dei risultati 
+
 
 
 
