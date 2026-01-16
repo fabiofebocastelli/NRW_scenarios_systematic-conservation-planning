@@ -1,5 +1,5 @@
-#load librariess
-library(ggplot2)  
+# load librariess
+library(ggplot2)
 library(patchwork)
 library(RColorBrewer)
 library(cowplot)
@@ -13,7 +13,7 @@ data1 <- data.frame(
     # Scenario 1
     0.016, 0.016, 0.13, 0.802, 0.182, 0.182,
     # Scenario 2
-    0.016, 0.016, 0.13, 0.331, 0.182, 0.412,
+    0.016, 0.016, 0.13, 0.458, 0.182, 0.213,
     # Scenario 3
     0.016, 0.016, 0.13, 0.376, 0.182, 0.617,
     # Scenario 4
@@ -44,20 +44,17 @@ data2 <- data.frame(
 # Impostare l'ordine corretto per le metriche
 data2$metric <- factor(data2$metric, levels = c("Aggregation Index", "Clumpiness Index", "Forest habitats", "Natura 2000"))
 
-
-
-
-#formattazione tema comune
+# formattazione tema comune
 common_theme <- function(
-    title_size = 22,           # esempio: 16 per il titolo
-    axis_text_size = 18,       # esempio: 12 per i tick degli assi
-    facet_size = 18            # esempio: 13 per il facet label
+  title_size = 22, # esempio: 16 per il titolo
+  axis_text_size = 18, # esempio: 12 per i tick degli assi
+  facet_size = 18 # esempio: 13 per il facet label
 ) {
   theme_minimal() +
     theme(
       legend.position = "none",
       axis.text.x = element_text(angle = 45, hjust = 1, size = axis_text_size),
-      axis.text.y = element_text(size = axis_text_size),    # aggiungi questa linea per asse y
+      axis.text.y = element_text(size = axis_text_size), # aggiungi questa linea per asse y
       strip.text = element_text(size = facet_size, face = "plain"),
       plot.title = element_text(
         hjust = 0.5,
@@ -69,17 +66,16 @@ common_theme <- function(
     )
 }
 
-
 # Prima serie di barplot
 p1 <- ggplot(data1, aes(x = ownership, y = value, fill = type)) +
   geom_bar(stat = "identity", position = "dodge", width = 0.7) +
   scale_fill_manual(values = c("Initial" = "black", "New" = "grey70")) +
-  facet_grid(~ scenario, scales = "free_x", space = "free_x") +
+  facet_grid(~scenario, scales = "free_x", space = "free_x") +
   labs(title = "(a) Forest Owners Involvement", x = NULL) +
   common_theme() +
   scale_y_continuous(limits = c(0, 1), labels = scales::percent)
 
-#rimuovo griglia in sfondo
+# rimuovo griglia in sfondo
 p1 <- p1 + theme(
   panel.grid.major.x = element_blank(),
   panel.grid.minor.x = element_blank()
@@ -91,13 +87,13 @@ p2 <- ggplot(data2, aes(x = metric, y = value, fill = metric)) +
   geom_bar(stat = "identity", width = 0.7) +
   scale_fill_manual(
     values = c(
-      "Aggregation Index" = "#0072B2",        # blu intenso
-      "Clumpiness Index" = "#56B4E9",        # azzurro
+      "Aggregation Index" = "#0072B2", # blu intenso
+      "Clumpiness Index" = "#56B4E9", # azzurro
       "Forest habitats" = "#E69F00", # arancione
-      "Natura 2000" = "#F0E442"  # giallo
+      "Natura 2000" = "#F0E442" # giallo
     )
   ) +
-  facet_grid(~ scenario, scales = "free_x", space = "free_x") +
+  facet_grid(~scenario, scales = "free_x", space = "free_x") +
   labs(title = "(b) Compactness vs Representativeness", x = NULL, y = "Percentage") +
   common_theme() +
   scale_y_continuous(limits = c(0, 1), labels = scales::percent)
@@ -109,19 +105,20 @@ p2 <- p2 + theme(
 
 
 # Combinare i plot verticalmente con più spazio tra loro
-#final_plot <- p1 / plot_spacer() / p2 / plot_spacer() / p3 +
+# final_plot <- p1 / plot_spacer() / p2 / plot_spacer() / p3 +
 # plot_layout(heights = c(1.2, 0.1, 1, 0.1, 1))
 
 # metto solo p1 e p2 uno sopra l'altro come da commento di Francesco
-final_plot <- p1 / plot_spacer() / p2 + 
+final_plot <- p1 / plot_spacer() / p2 +
   plot_layout(heights = c(1.2, 0.1, 1))
 
+library(httpgd)
+hgd()
 # Visualizzare il plot
 print(final_plot)
 
 # Salvare il plot come immagine ad alta risoluzione
-ggsave("C:/NRW_figures/NRW figures/Data manipulation/fig3.png", final_plot, width = 12, height = 18, dpi = 1000)
-
+ggsave("C:/NRW_figures/NRW figures/Data manipulation/fig3_new.png", final_plot, width = 12, height = 18, dpi = 1000)
 
 
 ### nuova Figure 2b su consiglio di Francesco
@@ -132,7 +129,7 @@ data2$scenario <- factor(data2$scenario, levels = c("Scenario 1", "Scenario 3", 
 # Barplot: 4 grafici (uno per metrica), 3 barre per scenario
 p2b <- ggplot(data2, aes(x = scenario, y = value, fill = scenario)) +
   geom_bar(stat = "identity", width = 0.7) +
-  facet_wrap(~ metric, ncol = 2) +
+  facet_wrap(~metric, ncol = 2) +
   scale_fill_manual(
     values = c(
       "Scenario 1" = "#0072B2",
@@ -149,14 +146,13 @@ p2b <- ggplot(data2, aes(x = scenario, y = value, fill = scenario)) +
   )
 
 p2b <- p2b + theme(
-  plot.title = element_text(size = 24),       # titolo principale (20+4)
-  axis.title = element_text(size = 20),       # titoli assi x e y (16+4)
-  axis.text = element_text(size = 18),        # numeri e label sugli assi (14+4)
-  legend.title = element_text(size = 20),     # titolo legenda (16+4)
-  legend.text = element_text(size = 18),      # testo legenda (14+4)
-  strip.text = element_text(size = 20)        # testo sopra i facet (16+4)
+  plot.title = element_text(size = 24), # titolo principale (20+4)
+  axis.title = element_text(size = 20), # titoli assi x e y (16+4)
+  axis.text = element_text(size = 18), # numeri e label sugli assi (14+4)
+  legend.title = element_text(size = 20), # titolo legenda (16+4)
+  legend.text = element_text(size = 18), # testo legenda (14+4)
+  strip.text = element_text(size = 20) # testo sopra i facet (16+4)
 )
-
 
 
 p2b
@@ -166,13 +162,10 @@ ggsave("C:/NRW_figures/NRW figures/Outputs_figures/figure2b_new.png", p2b, width
 ###########################################################################################################################
 
 
-
-
-
 ### making a separate figure for Figure 2c called Figure 5 ###
 
 
-# Dati di input per terza serie 
+# Dati di input per terza serie
 features <- c(
   "91D0", "91E0", "91E0; NAX0", "91E0; NAC0", "91F0", "NA00", "NAB0", "NAC0", "NAC0; NAX0", "NAD0",
   "NAV0", "NAW0", "9110", "9110; 91E0", "9130", "9150", "9160", "9170", "9180", "9190",
@@ -251,11 +244,12 @@ data3_spaced$scenario <- factor(data3_spaced$scenario)
 
 # Tema personalizzato
 common_theme <- function(
-    title_size = 17,
-    axis_text_size = 11,
-    axis_text_x_size = 10,
-    legend_title_size = 14,
-    legend_text_size = 12) {
+  title_size = 17,
+  axis_text_size = 11,
+  axis_text_x_size = 10,
+  legend_title_size = 14,
+  legend_text_size = 12
+) {
   theme_minimal() +
     theme(
       legend.position = "none",
@@ -333,7 +327,3 @@ print(p3_spaced_final)
 
 
 ggsave("C:/NRW_figures/NRW figures/Outputs_figures/figure5.png", p3_spaced_final, width = 10, height = 12, dpi = 600, bg = "white")
-
-
-
-
